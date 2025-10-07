@@ -35,6 +35,15 @@ shape = SubResource("RectangleShape2D_0d4hy")
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = SubResource("GradientTexture2D_x6lsh")
 
+[node name="FootArea" type="Area2D" parent="."]
+collision_mask = 16
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FootArea"]
+position = Vector2(0, 22)
+scale = Vector2(0.7, 0.3)
+shape = SubResource("RectangleShape2D_0d4hy")
+
 [node name="Arm" type="Node2D" parent="."]
 position = Vector2(4, -4)
 script = ExtResource("2_j2e6e")

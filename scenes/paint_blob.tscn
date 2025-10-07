@@ -1,27 +1,29 @@
-[gd_scene load_steps=5 format=3 uid="uid://djb5s2rswpunk"]
+[gd_scene load_steps=6 format=3 uid="uid://djb5s2rswpunk"]
 
 [ext_resource type="Script" uid="uid://61p2fwskevu1" path="res://scripts/paint_blob.gd" id="1_b0ce4"]
+[ext_resource type="PackedScene" uid="uid://m1vlr6o5d3mf" path="res://scenes/paint_decal.tscn" id="2_7x9hf"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_blob"]
-radius = 5.0
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_blob"]
+size = Vector2(20, 6)
 
 [sub_resource type="Gradient" id="Gradient_paint"]
-colors = PackedColorArray(1, 0.670588, 0, 1, 0.996078, 0.364706, 0.278431, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_paint"]
 gradient = SubResource("Gradient_paint")
-width = 12
-height = 12
+width = 32
+height = 8
 fill = 1
 
 [node name="PaintBlob" type="RigidBody2D"]
 collision_layer = 2
 collision_mask = 4
 script = ExtResource("1_b0ce4")
+decal_scene = ExtResource("2_7x9hf")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("CircleShape2D_blob")
+shape = SubResource("RectangleShape2D_blob")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.6, 0.6)
+scale = Vector2(1, 0.6)
 texture = SubResource("GradientTexture2D_paint")

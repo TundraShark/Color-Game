@@ -1,0 +1,71 @@
+[gd_scene load_steps=2 format=3 uid="uid://6mmb6fd6asy7"]
+
+[ext_resource type="Script" path="res://scripts/color_indicator.gd" id="1_v4qlk"]
+
+[node name="ColorIndicator" type="Control"]
+script = ExtResource("1_v4qlk")
+layout_mode = 1
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_right = 150.0
+offset_bottom = 36.0
+
+[node name="Palette" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 150.0
+offset_bottom = 36.0
+theme_override_constants/separation = 6
+
+[node name="Slot1" type="Control" parent="Palette"]
+custom_minimum_size = Vector2(20, 20)
+
+[node name="Circle" type="Panel" parent="Palette/Slot1"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Slot2" type="Control" parent="Palette"]
+custom_minimum_size = Vector2(20, 20)
+
+[node name="Circle" type="Panel" parent="Palette/Slot2"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Slot3" type="Control" parent="Palette"]
+custom_minimum_size = Vector2(20, 20)
+
+[node name="Circle" type="Panel" parent="Palette/Slot3"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Slot4" type="Control" parent="Palette"]
+custom_minimum_size = Vector2(20, 20)
+
+[node name="Circle" type="Panel" parent="Palette/Slot4"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Slot5" type="Control" parent="Palette"]
+custom_minimum_size = Vector2(20, 20)
+
+[node name="Circle" type="Panel" parent="Palette/Slot5"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Slot6" type="Control" parent="Palette"]
+custom_minimum_size = Vector2(20, 20)
+
+[node name="Circle" type="Panel" parent="Palette/Slot6"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
