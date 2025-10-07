@@ -1,6 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://df8t8w2wkr3sf"]
+[gd_scene load_steps=9 format=3 uid="uid://df8t8w2wkr3sf"]
 
 [ext_resource type="Script" uid="uid://rmtxc85f84el" path="res://scripts/player.gd" id="1_0m1pg"]
+[ext_resource type="Script" uid="uid://b0we45kolj8k6" path="res://scripts/arm.gd" id="2_j2e6e"]
+[ext_resource type="PackedScene" uid="uid://djb5s2rswpunk" path="res://scenes/paint_blob.tscn" id="3_9y3h4"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0d4hy"]
 size = Vector2(32, 48)
@@ -14,7 +16,17 @@ width = 32
 height = 48
 fill = 1
 
+[sub_resource type="Gradient" id="Gradient_arm"]
+colors = PackedColorArray(0.980392, 0.792157, 0.329412, 1, 0.8, 0.45098, 0.164706, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_arm"]
+gradient = SubResource("Gradient_arm")
+width = 48
+height = 8
+fill = 1
+
 [node name="Player" type="CharacterBody2D"]
+collision_mask = 4
 script = ExtResource("1_0m1pg")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -22,3 +34,12 @@ shape = SubResource("RectangleShape2D_0d4hy")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = SubResource("GradientTexture2D_x6lsh")
+
+[node name="Arm" type="Node2D" parent="."]
+position = Vector2(4, -4)
+script = ExtResource("2_j2e6e")
+paint_blob_scene = ExtResource("3_9y3h4")
+
+[node name="Sprite2D" type="Sprite2D" parent="Arm"]
+texture = SubResource("GradientTexture2D_arm")
+offset = Vector2(24, 0)

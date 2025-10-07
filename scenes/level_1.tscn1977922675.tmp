@@ -1,0 +1,85 @@
+[gd_scene load_steps=8 format=3 uid="uid://bclekkmobvy17"]
+
+[ext_resource type="PackedScene" uid="uid://df8t8w2wkr3sf" path="res://scenes/player.tscn" id="1_6aa3b"]
+
+[sub_resource type="Gradient" id="Gradient_2befy"]
+colors = PackedColorArray(0.356863, 0.356863, 0.356863, 1, 0.141176, 0.141176, 0.141176, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_k9vxw"]
+gradient = SubResource("Gradient_2befy")
+width = 640
+height = 32
+fill = 1
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bswci"]
+size = Vector2(214, 8)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rus8k"]
+size = Vector2(30, 70.75)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_014kd"]
+size = Vector2(35, 73)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kb8qa"]
+size = Vector2(640, 32)
+
+[node name="Level1" type="Node2D"]
+
+[node name="Player" parent="." instance=ExtResource("1_6aa3b")]
+position = Vector2(0, -120)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(0, -120)
+
+[node name="Ground4" type="StaticBody2D" parent="."]
+position = Vector2(-142, -175)
+collision_layer = 4
+collision_mask = 3
+
+[node name="Sprite2D" type="Sprite2D" parent="Ground4"]
+position = Vector2(-273, 113)
+scale = Vector2(0.334375, 0.25)
+texture = SubResource("GradientTexture2D_k9vxw")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground4"]
+position = Vector2(-273, 113)
+shape = SubResource("RectangleShape2D_bswci")
+
+[node name="Ground3" type="StaticBody2D" parent="."]
+position = Vector2(0, 480)
+collision_layer = 4
+collision_mask = 3
+
+[node name="Sprite2D" type="Sprite2D" parent="Ground3"]
+position = Vector2(-294, -470.375)
+scale = Vector2(0.0468749, 2.22656)
+texture = SubResource("GradientTexture2D_k9vxw")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="Ground3"]
+position = Vector2(-294, -470.375)
+shape = SubResource("RectangleShape2D_rus8k")
+
+[node name="Ground2" type="StaticBody2D" parent="."]
+position = Vector2(0, 240)
+collision_layer = 4
+collision_mask = 3
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="Ground2"]
+position = Vector2(-215.5, -172.5)
+shape = SubResource("RectangleShape2D_014kd")
+
+[node name="Sprite2D" type="Sprite2D" parent="Ground2"]
+position = Vector2(-215.5, -172.5)
+scale = Vector2(0.0546875, 2.28125)
+texture = SubResource("GradientTexture2D_k9vxw")
+
+[node name="Ground" type="StaticBody2D" parent="."]
+position = Vector2(0, 120)
+collision_layer = 4
+collision_mask = 3
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground"]
+shape = SubResource("RectangleShape2D_kb8qa")
+
+[node name="Sprite2D" type="Sprite2D" parent="Ground"]
+texture = SubResource("GradientTexture2D_k9vxw")
