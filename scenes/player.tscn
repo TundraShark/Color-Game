@@ -35,6 +35,14 @@ shape = SubResource("RectangleShape2D_0d4hy")
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = SubResource("GradientTexture2D_x6lsh")
 
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+drag_horizontal_enabled = true
+drag_vertical_enabled = true
+drag_left_margin = 0.25
+drag_right_margin = 0.25
+
 [node name="FootArea" type="Area2D" parent="."]
 collision_mask = 16
 monitorable = false

@@ -299,15 +299,15 @@ func _create_conveyor_texture(direction: int) -> Texture2D:
 func _attach_vine_area(parent: Node2D, orientation_value: int) -> void:
     if parent.get_node_or_null("VineArea") != null:
         return
-    var area := Area2D.new()
-    area.name = "VineArea"
-    area.monitoring = true
-    area.monitorable = true
-    area.collision_layer = VINE_LAYER
-    area.collision_mask = 1
-    if not area.is_in_group("vine_paint"):
-        area.add_to_group("vine_paint")
-    area.set_meta("is_vine", true)
+    var vine_area := Area2D.new()
+    vine_area.name = "VineArea"
+    vine_area.monitoring = true
+    vine_area.monitorable = true
+    vine_area.collision_layer = VINE_LAYER
+    vine_area.collision_mask = 1
+    if not vine_area.is_in_group("vine_paint"):
+        vine_area.add_to_group("vine_paint")
+    vine_area.set_meta("is_vine", true)
 
     var shape := RectangleShape2D.new()
     var size := Vector2(36.0, DEFAULT_VINE_LENGTH)
@@ -320,10 +320,10 @@ func _attach_vine_area(parent: Node2D, orientation_value: int) -> void:
     var collider := CollisionShape2D.new()
     collider.name = "VineShape"
     collider.shape = shape
-    area.add_child(collider)
+    vine_area.add_child(collider)
 
-    area.position = area_offset
-    parent.add_child(area)
+    vine_area.position = area_offset
+    parent.add_child(vine_area)
     print_debug("[PaintDecal] VineArea added", " parent=", parent.name, " local_offset=", area_offset, " size=", shape.size)
 
 func _configure_vine_collision_shape() -> void:

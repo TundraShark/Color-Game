@@ -18,6 +18,12 @@ const AIR_FRICTION := 200.0
 @export var conveyor_accel := 900.0
 @export var climb_speed := 210.0
 @export var climb_accel := 900.0
+@export var camera_mouse_max_distance := 240.0
+@export var camera_mouse_follow_speed := 8.0
+@export var camera_edge_padding := Vector2(220.0, 160.0)
+@export var bounce_min_speed := 140.0
+@export var bounce_max_multiplier := 1.3
+@export var bounce_min_multiplier := 0.35
 const CLIMB_DETECTION_RADIUS := 22.0
 const CLIMB_DETECTION_OFFSET := Vector2(0, -8)
 
@@ -38,12 +44,16 @@ var _on_conveyor := false
 var _vine_contacts := 0
 var _on_vine := false
 var _vine_query_shape := CircleShape2D.new()
+var _camera: Camera2D
 
 func _ready() -> void:
     _ensure_input_actions()
     gravity = float(ProjectSettings.get_setting("physics/2d/default_gravity"))
     z_index = 50
     _vine_query_shape.radius = CLIMB_DETECTION_RADIUS
+    _camera = get_node_or_null("Camera2D")
+    if _camera:
+        _camera.make_current()
     _foot_area = get_node_or_null("FootArea")
     if _foot_area:
         _foot_area.monitoring = true
@@ -130,6 +140,7 @@ func _physics_process(delta: float) -> void:
     current_velocity.x = clamp(current_velocity.x, -max_speed, max_speed)
     self.velocity = current_velocity
     move_and_slide()
+    _update_camera_offset(delta)
 
 func _ensure_input_actions() -> void:
     _ensure_action("move_left", [KEY_A, KEY_LEFT])
@@ -162,10 +173,7 @@ func _on_foot_body_entered(body: Node) -> void:
         _slippery_contacts += 1
         _on_slippery_paint = _slippery_contacts > 0
     elif body.is_in_group("bouncy_paint"):
-        var strength := BOUNCY_DEFAULT_STRENGTH
-        if body.has_meta("bounce_strength"):
-            strength = float(body.get_meta("bounce_strength"))
-        _queue_bounce(strength)
+        _handle_bouncy_contact(body)
 
 func _on_foot_body_exited(body: Node) -> void:
     if body.is_in_group("slippery_paint"):
@@ -177,10 +185,7 @@ func _on_foot_area_entered(area: Area2D) -> void:
         _slippery_contacts += 1
         _on_slippery_paint = true
     elif area.is_in_group("bouncy_paint"):
-        var strength := BOUNCY_DEFAULT_STRENGTH
-        if area.has_meta("bounce_strength"):
-            strength = float(area.get_meta("bounce_strength"))
-        _queue_bounce(strength)
+        _handle_bouncy_contact(area)
 
 func _on_foot_area_exited(area: Area2D) -> void:
     if area.is_in_group("slippery_paint"):
@@ -225,18 +230,32 @@ func _scan_for_bouncy_surfaces(current_velocity: Vector2) -> void:
         if results.size() == 0:
             continue
         var entry := results[0]
-        var collider: Object = entry.get("collider")
-        var strength := BOUNCY_DEFAULT_STRENGTH
-        if collider and collider.has_meta("bounce_strength"):
-            strength = float(collider.get_meta("bounce_strength"))
-        _queue_bounce(strength)
-        _bouncy_cooldown = 0.1
+        if entry.has("collider"):
+            var collider: Object = entry.get("collider")
+            if collider:
+                _handle_bouncy_contact(collider)
         break
 
 func _queue_bounce(strength: float) -> void:
     _pending_bounce_strength = max(_pending_bounce_strength, strength)
     _slippery_decay_timer = SLIPPERY_DECAY_DELAY
     _bouncy_cooldown = 0.1
+
+func _handle_bouncy_contact(target: Object) -> void:
+    if _bouncy_cooldown > 0.0:
+        return
+    var strength: float = BOUNCY_DEFAULT_STRENGTH
+    if target.has_meta("bounce_strength"):
+        strength = float(target.get_meta("bounce_strength"))
+
+    var downward_speed: float = max(-velocity.y, 0.0)
+    if downward_speed < bounce_min_speed:
+        return
+
+    var normalized: float = clamp((downward_speed - bounce_min_speed) / max(bounce_min_speed, 1.0), 0.0, 1.0)
+    var multiplier: float = lerp(bounce_min_multiplier, bounce_max_multiplier, normalized)
+    var final_strength: float = strength * multiplier
+    _queue_bounce(final_strength)
 
 func _update_conveyor_state() -> void:
     if not is_on_floor():
@@ -303,3 +322,37 @@ func _update_vine_state() -> void:
                 print("[Player] Vine collider=", result.collider.name)
     elif not _on_vine and previous_on_vine:
         print("[Player] Vine contact lost")
+
+func _update_camera_offset(delta: float) -> void:
+    if _camera == null:
+        return
+    var viewport := get_viewport()
+    if viewport == null:
+        return
+    var viewport_size: Vector2 = viewport.get_visible_rect().size
+    if viewport_size == Vector2.ZERO:
+        return
+
+    var mouse_view: Vector2 = viewport.get_mouse_position()
+    var center: Vector2 = viewport_size * 0.5
+    var desired_offset: Vector2 = Vector2.ZERO
+
+    var padding_x: float = clamp(camera_edge_padding.x, 0.0, center.x - 1.0)
+    var padding_y: float = clamp(camera_edge_padding.y, 0.0, center.y - 1.0)
+    var dx: float = mouse_view.x - center.x
+    var dy: float = mouse_view.y - center.y
+
+    if abs(dx) > padding_x:
+        var excess_x: float = abs(dx) - padding_x
+        var range_x: float = max(center.x - padding_x, 1.0)
+        var factor_x: float = clamp(excess_x / range_x, 0.0, 1.0)
+        desired_offset.x = sign(dx) * camera_mouse_max_distance * factor_x
+
+    if abs(dy) > padding_y:
+        var excess_y: float = abs(dy) - padding_y
+        var range_y: float = max(center.y - padding_y, 1.0)
+        var factor_y: float = clamp(excess_y / range_y, 0.0, 1.0)
+        desired_offset.y = sign(dy) * camera_mouse_max_distance * factor_y
+
+    var t: float = clamp(delta * camera_mouse_follow_speed, 0.0, 1.0)
+    _camera.offset = _camera.offset.lerp(desired_offset, t)
