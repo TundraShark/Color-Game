@@ -4,6 +4,9 @@ const DECAL_COUNT := 5
 const CEILING_PROBE_THRESHOLD := 8.0
 const FLOOR_PROBE_THRESHOLD := 10.0
 const WALL_PROBE_THRESHOLD := 8.0
+const VINE_LAYER := 128
+const VINE_AREA_WIDTH := 12.0
+const VINE_AREA_LENGTH := 56.0
 
 @export var decal_scene: PackedScene
 @export var vine_scene: PackedScene
@@ -57,10 +60,10 @@ func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
         averaged_normal = global_transform.basis_xform(averaged_normal)
     var contact_normal := averaged_normal.normalized()
 
-    _spawn_decals(contact_point, contact_normal)
+    _spawn_decals(contact_point, contact_normal, velocity)
     call_deferred("queue_free")
 
-func _spawn_decals(point: Vector2, normal: Vector2) -> void:
+func _spawn_decals(point: Vector2, normal: Vector2, impact_velocity: Vector2) -> void:
     var safe_normal := normal
     if safe_normal == Vector2.ZERO:
         safe_normal = Vector2.UP
@@ -90,7 +93,7 @@ func _spawn_decals(point: Vector2, normal: Vector2) -> void:
             node2d.global_position = point + tangent_offset + normal_offset
             node2d.rotation = base_rotation + deg_to_rad(_rng.randf_range(-35.0, 35.0))
         if decal_instance.has_method("configure"):
-            decal_instance.configure(_rng, safe_normal, paint_color, paint_color_name)
+            decal_instance.configure(_rng, safe_normal, paint_color, paint_color_name, impact_velocity)
         parent_node.add_child(decal_instance)
 
 func _spawn_vine(point: Vector2, orientation_value: int) -> void:
@@ -105,7 +108,7 @@ func _spawn_vine(point: Vector2, orientation_value: int) -> void:
         placeholder.global_position = point
 
         var vine_line := Line2D.new()
-        vine_line.default_color = Color(1.0, 0.2, 0.8)
+        vine_line.default_color = paint_color
         vine_line.width = 8.0
         vine_line.joint_mode = Line2D.LINE_JOINT_ROUND
         vine_line.begin_cap_mode = Line2D.LINE_CAP_ROUND
@@ -123,6 +126,7 @@ func _spawn_vine(point: Vector2, orientation_value: int) -> void:
 
         placeholder.add_child(vine_line)
         parent_node.add_child(placeholder)
+        _create_vine_area(parent_node, point, orientation_value)
         return
 
     var vine_instance := vine_scene.instantiate()
@@ -138,6 +142,7 @@ func _spawn_vine(point: Vector2, orientation_value: int) -> void:
     var parent := get_tree().current_scene
     if parent:
         parent.add_child(vine_instance)
+        _create_vine_area(parent, point, orientation_value)
 
 func _determine_vine_orientation(surface_normal: Vector2) -> int:
     var n: Vector2 = surface_normal.normalized()
@@ -206,3 +211,37 @@ func _log_green_hit(point: Vector2, normal: Vector2, orientation_value: int) -> 
         2:
             orientation_label = "Vertical"
     print_debug("[PaintBlob] Green hit at ", point, " normal=", normal, " orientation=", orientation_label)
+
+func _create_vine_area(parent: Node, point: Vector2, orientation_value: int) -> void:
+    if parent == null:
+        return
+    var area := Area2D.new()
+    area.name = "VineClimbArea"
+    area.global_position = point
+    area.monitoring = true
+    area.monitorable = true
+    area.collision_layer = VINE_LAYER
+    area.collision_mask = 1
+    if not area.is_in_group("vine_paint"):
+        area.add_to_group("vine_paint")
+    area.set_meta("is_vine", true)
+
+    var shape := RectangleShape2D.new()
+    var size := Vector2(VINE_AREA_WIDTH, VINE_AREA_LENGTH)
+    var offset := Vector2(0, VINE_AREA_LENGTH * 0.35)
+    if orientation_value == 1:
+        size = Vector2(VINE_AREA_LENGTH, VINE_AREA_WIDTH)
+        offset = Vector2(0, 0)
+    elif orientation_value == 0:
+        size = Vector2(VINE_AREA_WIDTH, VINE_AREA_WIDTH)
+        offset = Vector2(0, VINE_AREA_WIDTH * 0.5)
+    shape.size = size
+
+    var collider := CollisionShape2D.new()
+    collider.name = "VineClimbShape"
+    collider.shape = shape
+    collider.position = offset
+    area.add_child(collider)
+
+    parent.add_child(area)
+    print_debug("[PaintBlob] Vine climb area created at ", point, " size=", size, " offset=", offset, " orientation=", orientation_value)
