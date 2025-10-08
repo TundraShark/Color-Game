@@ -21,9 +21,10 @@ const AIR_FRICTION := 200.0
 @export var camera_mouse_max_distance := 240.0
 @export var camera_mouse_follow_speed := 8.0
 @export var camera_edge_padding := Vector2(220.0, 160.0)
-@export var bounce_min_speed := 140.0
-@export var bounce_max_multiplier := 1.3
-@export var bounce_min_multiplier := 0.35
+@export var bounce_min_speed := 80.0
+@export var bounce_max_speed := 600.0
+@export var bounce_base_multiplier := 1.0
+@export var bounce_bonus_multiplier := 1.2
 const CLIMB_DETECTION_RADIUS := 22.0
 const CLIMB_DETECTION_OFFSET := Vector2(0, -8)
 
@@ -45,6 +46,9 @@ var _vine_contacts := 0
 var _on_vine := false
 var _vine_query_shape := CircleShape2D.new()
 var _camera: Camera2D
+var _last_fall_speed: float = 0.0
+var _bounce_bonus_available := true
+var _on_bouncy_surface := false
 
 func _ready() -> void:
     _ensure_input_actions()
@@ -68,6 +72,9 @@ func _ready() -> void:
         pass
 
 func _physics_process(delta: float) -> void:
+    var current_fall_speed: float = max(-velocity.y, 0.0)
+    if current_fall_speed > 0.0:
+        _last_fall_speed = max(_last_fall_speed, current_fall_speed)
     var current_velocity := self.velocity
     var direction := Input.get_axis("move_left", "move_right")
 
@@ -78,6 +85,10 @@ func _physics_process(delta: float) -> void:
     _update_conveyor_state()
     _update_vine_state()
     _scan_for_bouncy_surfaces(current_velocity)
+
+    if is_on_floor() and not _on_bouncy_surface:
+        _last_fall_speed = 0.0
+        _bounce_bonus_available = true
 
     if _pending_bounce_strength > 0.0:
         current_velocity.y = -abs(_pending_bounce_strength)
@@ -224,15 +235,17 @@ func _scan_for_bouncy_surfaces(current_velocity: Vector2) -> void:
     params.collide_with_areas = true
     params.collide_with_bodies = false
 
+    _on_bouncy_surface = false
     for offset in FOOT_SAMPLE_OFFSETS:
         params.position = global_position + offset
-        var results := space.intersect_point(params, 1)
+        var results: Array = space.intersect_point(params, 1)
         if results.size() == 0:
             continue
-        var entry := results[0]
+        var entry: Dictionary = results[0]
         if entry.has("collider"):
             var collider: Object = entry.get("collider")
             if collider:
+                _on_bouncy_surface = true
                 _handle_bouncy_contact(collider)
         break
 
@@ -240,6 +253,7 @@ func _queue_bounce(strength: float) -> void:
     _pending_bounce_strength = max(_pending_bounce_strength, strength)
     _slippery_decay_timer = SLIPPERY_DECAY_DELAY
     _bouncy_cooldown = 0.1
+    _last_fall_speed = 0.0
 
 func _handle_bouncy_contact(target: Object) -> void:
     if _bouncy_cooldown > 0.0:
@@ -248,14 +262,27 @@ func _handle_bouncy_contact(target: Object) -> void:
     if target.has_meta("bounce_strength"):
         strength = float(target.get_meta("bounce_strength"))
 
-    var downward_speed: float = max(-velocity.y, 0.0)
-    if downward_speed < bounce_min_speed:
+    var downward_speed: float = max(_last_fall_speed, max(-velocity.y, 0.0))
+    if downward_speed <= 0.0:
         return
 
-    var normalized: float = clamp((downward_speed - bounce_min_speed) / max(bounce_min_speed, 1.0), 0.0, 1.0)
-    var multiplier: float = lerp(bounce_min_multiplier, bounce_max_multiplier, normalized)
-    var final_strength: float = strength * multiplier
-    _queue_bounce(final_strength)
+    var capped_fall_speed: float = min(downward_speed, bounce_max_speed)
+    var base_speed: float = max(capped_fall_speed, bounce_min_speed)
+
+    var base_multiplier: float = max(1.0, bounce_base_multiplier)
+    var multiplier: float = base_multiplier
+    if _bounce_bonus_available:
+        var bonus_multiplier: float = clamp(bounce_bonus_multiplier, base_multiplier, 1.2)
+        multiplier = bonus_multiplier
+        _bounce_bonus_available = false
+
+    var target_speed: float = base_speed * multiplier
+    var max_bonus_speed: float = capped_fall_speed * 1.2
+    var metadata_speed: float = clamp(strength, 0.0, max_bonus_speed)
+    target_speed = max(target_speed, metadata_speed)
+    target_speed = clamp(target_speed, capped_fall_speed, max_bonus_speed)
+
+    _queue_bounce(target_speed)
 
 func _update_conveyor_state() -> void:
     if not is_on_floor():
