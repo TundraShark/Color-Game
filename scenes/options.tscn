@@ -1,0 +1,132 @@
+[gd_scene load_steps=2 format=3 uid="uid://options"]
+
+[ext_resource type="Script" path="res://scripts/options.gd" id="1_script"]
+
+[node name="Options" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.1, 0.1, 0.15, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -200.0
+offset_right = 250.0
+offset_bottom = 200.0
+theme_override_constants/separation = 25
+
+[node name="Title" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Options"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="OptionsContainer" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="FullscreenContainer" type="HBoxContainer" parent="VBoxContainer/OptionsContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="FullscreenLabel" type="Label" parent="VBoxContainer/OptionsContainer/FullscreenContainer"]
+layout_mode = 2
+text = "Fullscreen:"
+size_flags_horizontal = 3
+
+[node name="FullscreenCheckBox" type="CheckBox" parent="VBoxContainer/OptionsContainer/FullscreenContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 0
+
+[node name="VolumeContainer" type="VBoxContainer" parent="VBoxContainer/OptionsContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="MasterVolumeContainer" type="HBoxContainer" parent="VBoxContainer/OptionsContainer/VolumeContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="MasterVolumeLabel" type="Label" parent="VBoxContainer/OptionsContainer/VolumeContainer/MasterVolumeContainer"]
+layout_mode = 2
+text = "Master Volume:"
+size_flags_horizontal = 3
+
+[node name="MasterVolumeSlider" type="HSlider" parent="VBoxContainer/OptionsContainer/VolumeContainer/MasterVolumeContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+
+[node name="MasterVolumeValue" type="Label" parent="VBoxContainer/OptionsContainer/VolumeContainer/MasterVolumeContainer"]
+layout_mode = 2
+text = "100%"
+size_flags_horizontal = 1
+
+[node name="SFXVolumeContainer" type="HBoxContainer" parent="VBoxContainer/OptionsContainer/VolumeContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SFXVolumeLabel" type="Label" parent="VBoxContainer/OptionsContainer/VolumeContainer/SFXVolumeContainer"]
+layout_mode = 2
+text = "SFX Volume:"
+size_flags_horizontal = 3
+
+[node name="SFXVolumeSlider" type="HSlider" parent="VBoxContainer/OptionsContainer/VolumeContainer/SFXVolumeContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+
+[node name="SFXVolumeValue" type="Label" parent="VBoxContainer/OptionsContainer/VolumeContainer/SFXVolumeContainer"]
+layout_mode = 2
+text = "100%"
+size_flags_horizontal = 1
+
+[node name="MusicVolumeContainer" type="HBoxContainer" parent="VBoxContainer/OptionsContainer/VolumeContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="MusicVolumeLabel" type="Label" parent="VBoxContainer/OptionsContainer/VolumeContainer/MusicVolumeContainer"]
+layout_mode = 2
+text = "Music Volume:"
+size_flags_horizontal = 3
+
+[node name="MusicVolumeSlider" type="HSlider" parent="VBoxContainer/OptionsContainer/VolumeContainer/MusicVolumeContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+
+[node name="MusicVolumeValue" type="Label" parent="VBoxContainer/OptionsContainer/VolumeContainer/MusicVolumeContainer"]
+layout_mode = 2
+text = "100%"
+size_flags_horizontal = 1
+
+[node name="BackButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Back"
+alignment = 0
+
+[connection signal="toggled" from="VBoxContainer/OptionsContainer/FullscreenContainer/FullscreenCheckBox" to="." method="_on_fullscreen_toggled"]
+[connection signal="value_changed" from="VBoxContainer/OptionsContainer/VolumeContainer/MasterVolumeContainer/MasterVolumeSlider" to="." method="_on_master_volume_changed"]
+[connection signal="value_changed" from="VBoxContainer/OptionsContainer/VolumeContainer/SFXVolumeContainer/SFXVolumeSlider" to="." method="_on_sfx_volume_changed"]
+[connection signal="value_changed" from="VBoxContainer/OptionsContainer/VolumeContainer/MusicVolumeContainer/MusicVolumeSlider" to="." method="_on_music_volume_changed"]
+[connection signal="pressed" from="VBoxContainer/BackButton" to="." method="_on_back_pressed"]

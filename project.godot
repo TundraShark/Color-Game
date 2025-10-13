@@ -11,9 +11,39 @@ config_version=5
 [application]
 
 config/name="Color Game"
-run/main_scene="res://scenes/main.tscn"
-config/features=PackedStringArray("4.4", "GL Compatibility")
+run/main_scene="res://scenes/main_menu.tscn"
+config/features=PackedStringArray("4.5", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[audio]
+
+buses=[{
+"bypass_fx": false,
+"mute": false,
+"name": "Master",
+"send": "Master",
+"solo": false,
+"volume_db": 0.0
+}, {
+"bypass_fx": false,
+"mute": false,
+"name": "SFX",
+"send": "Master",
+"solo": false,
+"volume_db": 0.0
+}, {
+"bypass_fx": false,
+"mute": false,
+"name": "Music",
+"send": "Master",
+"solo": false,
+"volume_db": 0.0
+}]
+bus_layout={
+"bus_0": "Master",
+"bus_1": "SFX",
+"bus_2": "Music"
+}
 
 [editor_plugins]
 
@@ -22,8 +52,3 @@ enabled=PackedStringArray("res://addons/godot-rapier2d/plugin.info.cfg")
 [physics]
 
 2d/physics_engine="Rapier2D"
-
-[rendering]
-
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"

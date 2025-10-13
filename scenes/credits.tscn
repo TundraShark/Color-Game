@@ -1,0 +1,94 @@
+[gd_scene load_steps=2 format=3 uid="uid://credits"]
+
+[ext_resource type="Script" uid="uid://csj33mqcfcjhr" path="res://scripts/credits.gd" id="1_script"]
+
+[node name="Credits" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.15, 1)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_right = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 60
+
+[node name="DevelopersSection" type="VBoxContainer" parent="ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 35)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="DevelopersTitle" type="Label" parent="ScrollContainer/VBoxContainer/DevelopersSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.957, 0.416, 0.349, 1)
+theme_override_font_sizes/font_size = 40
+text = "Development Team"
+
+[node name="DevelopersContainer" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/DevelopersSection"]
+custom_minimum_size = Vector2(0, 25)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Programmer" type="Label" parent="ScrollContainer/VBoxContainer/DevelopersSection/DevelopersContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.957, 0.416, 0.349, 1)
+theme_override_font_sizes/font_size = 32
+text = "Tundra Shark, Programmer"
+
+[node name="Artist" type="Label" parent="ScrollContainer/VBoxContainer/DevelopersSection/DevelopersContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.957, 0.416, 0.349, 1)
+theme_override_font_sizes/font_size = 32
+text = "Aesthetic Den, Art & Design"
+
+[node name="SupportersSection" type="VBoxContainer" parent="ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+theme_override_constants/separation = 60
+
+[node name="SupportersTitle" type="Label" parent="ScrollContainer/VBoxContainer/SupportersSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "Manta Dreams Supporters"
+
+[node name="BottomSpacer" type="Control" parent="ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="."]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -60.0
+offset_right = 140.0
+offset_bottom = -20.0
+grow_vertical = 0
+text = "Back"
+
+[connection signal="pressed" from="BackButton" to="." method="_on_back_pressed"]
