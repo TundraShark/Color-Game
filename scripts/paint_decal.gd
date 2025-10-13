@@ -30,15 +30,34 @@ var _conveyor_bodies: Array[PhysicsBody2D] = []
 var _default_texture: Texture2D
 var _default_area_shape: Shape2D
 var _default_area_position := Vector2.ZERO
+var _using_custom_texture := false
 
 static var _conveyor_texture_left: Texture2D
 static var _conveyor_texture_right: Texture2D
 static var _conveyor_textures_ready := false
 
-@onready var area: Area2D = $Area
-@onready var swatch: Sprite2D = $Swatch
+const PAINT_TEXTURES := {
+    "red": preload("res://assets/game/paint-red.png"),
+    "green": preload("res://assets/game/paint-green.png"),
+    "orange": preload("res://assets/game/paint-orange.png"),
+    "purple": preload("res://assets/game/paint-purple.png"),
+    "yellow": preload("res://assets/game/paint-yellow.png"),
+    "blue": preload("res://assets/game/paint-blue.png")
+}
+
+const PAINT_RECT_SIZE := Vector2(12, 4)
+
+var area: Area2D
+var swatch: Sprite2D
+
+func _ensure_nodes_initialized() -> void:
+    if swatch == null or not is_instance_valid(swatch):
+        swatch = get_node_or_null("Swatch")
+    if area == null or not is_instance_valid(area):
+        area = get_node_or_null("Area")
 
 func _ready() -> void:
+    _ensure_nodes_initialized()
     if swatch:
         _default_texture = swatch.texture
     if area:
@@ -64,12 +83,15 @@ func _physics_process(delta: float) -> void:
     _apply_conveyor_to_bodies(delta)
 
 func configure(rng: RandomNumberGenerator, normal: Vector2, paint_color_in: Color, paint_name_in: String, impact_velocity: Vector2 = Vector2.ZERO) -> void:
+    _ensure_nodes_initialized()
     paint_color = paint_color_in
     paint_name = paint_name_in
-    is_slippery = paint_name == "Blue"
-    is_bouncy = paint_name == "Yellow"
-    is_vine = paint_name == "Green"
-    is_conveyor = paint_name == "Orange"
+    var paint_name_lower := paint_name.to_lower()
+    is_slippery = paint_name_lower == "blue"
+    is_bouncy = paint_name_lower == "yellow"
+    is_vine = paint_name_lower == "green"
+    is_conveyor = paint_name_lower == "orange"
+    _using_custom_texture = false
     _surface_normal = normal.normalized()
     if is_vine:
         _vine_orientation = _determine_vine_orientation(_surface_normal)
@@ -78,8 +100,23 @@ func configure(rng: RandomNumberGenerator, normal: Vector2, paint_color_in: Colo
         _configure_conveyor(rng, impact_velocity)
         _ensure_conveyor_textures()
         _apply_conveyor_texture()
-    elif swatch and _default_texture:
-        swatch.texture = _default_texture
+    elif swatch:
+        var lookup_name := paint_name.strip_edges().to_lower()
+        var texture: Texture2D = PAINT_TEXTURES.get(lookup_name, null) as Texture2D
+        if texture == null:
+            var resource_path := "res://assets/game/paint-%s.png" % lookup_name
+            if ResourceLoader.exists(resource_path):
+                texture = ResourceLoader.load(resource_path) as Texture2D
+        var has_custom_texture := texture != null
+        if not has_custom_texture and _default_texture:
+            texture = _default_texture
+        if texture:
+            swatch.texture = texture
+            _using_custom_texture = has_custom_texture or texture != _default_texture
+            swatch.modulate = Color(1, 1, 1, 1)
+            swatch.self_modulate = Color(1, 1, 1, 1)
+        swatch.centered = false
+        _apply_decal_collision_size(PAINT_RECT_SIZE)
     if is_slippery:
         print_debug("[PaintDecal] Slippery decal created at ", global_position)
     elif is_bouncy:
@@ -89,14 +126,8 @@ func configure(rng: RandomNumberGenerator, normal: Vector2, paint_color_in: Colo
     else:
         print_debug("[PaintDecal] Non-slippery decal created at ", global_position, " color=", paint_name)
 
-    var safe_normal := normal
-    if safe_normal == Vector2.ZERO:
-        safe_normal = Vector2.UP
-    var tangent := Vector2(-safe_normal.y, safe_normal.x)
-    if tangent == Vector2.ZERO:
-        tangent = Vector2.RIGHT
-    var angle_variation := deg_to_rad(rng.randf_range(-20.0, 20.0))
-    rotation = tangent.angle() + angle_variation
+    rotation = 0.0
+    # TODO: Add orientation-specific decals for walls and ceilings when dedicated textures exist.
 
     var scale_base := rng.randf_range(0.8, 1.25)
     scale = Vector2(scale_base, scale_base * rng.randf_range(0.7, 1.1))
@@ -114,11 +145,17 @@ func configure(rng: RandomNumberGenerator, normal: Vector2, paint_color_in: Colo
                 sprite.scale = Vector2(1, 1)
                 sprite.modulate = Color(1, 1, 1, 1)
             else:
-                sprite.scale = sprite_scale
-                var alpha := rng.randf_range(ALPHA_RANGE.x, ALPHA_RANGE.y)
-                sprite.modulate = Color(paint_color.r, paint_color.g, paint_color.b, alpha)
+                if _using_custom_texture:
+                    sprite.scale = Vector2.ONE
+                    sprite.modulate = Color(1, 1, 1, 1)
+                    sprite.self_modulate = Color(1, 1, 1, 1)
+                else:
+                    sprite.scale = sprite_scale
+                    var alpha := rng.randf_range(ALPHA_RANGE.x, ALPHA_RANGE.y)
+                    sprite.modulate = Color(paint_color.r, paint_color.g, paint_color.b, alpha)
 
 func _refresh_area_state() -> void:
+    _ensure_nodes_initialized()
     if area == null:
         return
     area.monitorable = true
@@ -193,6 +230,19 @@ func _refresh_area_state() -> void:
             area.remove_from_group("vine_paint")
         if is_in_group("vine_paint"):
             remove_from_group("vine_paint")
+
+func _apply_decal_collision_size(size: Vector2) -> void:
+    _ensure_nodes_initialized()
+    if area == null:
+        return
+    var collision_shape := area.get_node_or_null("CollisionShape2D") as CollisionShape2D
+    if collision_shape == null:
+        return
+    var rect_shape := collision_shape.shape as RectangleShape2D
+    if rect_shape == null:
+        rect_shape = RectangleShape2D.new()
+        collision_shape.shape = rect_shape
+    rect_shape.size = size
 
 func _spawn_vine() -> void:
     if _vine_spawned or _vine_orientation == VINE_NONE:
@@ -278,6 +328,7 @@ func _ensure_conveyor_textures() -> void:
     _conveyor_textures_ready = true
 
 func _apply_conveyor_texture() -> void:
+    _ensure_nodes_initialized()
     if swatch == null:
         return
     if _conveyor_direction < 0:
@@ -344,6 +395,7 @@ func _configure_vine_collision_shape() -> void:
     print_debug("[PaintDecal] Decal vine collision shape configured size=", size, " offset=", offset)
 
 func _restore_default_area_shape() -> void:
+    _ensure_nodes_initialized()
     if area == null:
         return
     var shape_node := area.get_node_or_null("CollisionShape2D")

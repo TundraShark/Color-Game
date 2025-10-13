@@ -1,20 +1,13 @@
-[gd_scene load_steps=9 format=3 uid="uid://df8t8w2wkr3sf"]
+[gd_scene load_steps=11 format=3 uid="uid://df8t8w2wkr3sf"]
 
 [ext_resource type="Script" uid="uid://rmtxc85f84el" path="res://scripts/player.gd" id="1_0m1pg"]
 [ext_resource type="Script" uid="uid://b0we45kolj8k6" path="res://scripts/arm.gd" id="2_j2e6e"]
 [ext_resource type="PackedScene" uid="uid://djb5s2rswpunk" path="res://scenes/paint_blob.tscn" id="3_9y3h4"]
+[ext_resource type="Texture2D" uid="uid://cyacxsgcs7b68" path="res://assets/game/picatso-stand.webp" id="4_picatso_stand"]
+[ext_resource type="Texture2D" uid="uid://clkft2wname34" path="res://assets/game/picatso-run.webp" id="5_picatso_run"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0d4hy"]
-size = Vector2(32, 48)
-
-[sub_resource type="Gradient" id="Gradient_2vpfs"]
-colors = PackedColorArray(0.78, 0.78, 0.78, 1, 0.78, 0.78, 0.78, 1)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_x6lsh"]
-gradient = SubResource("Gradient_2vpfs")
-width = 32
-height = 48
-fill = 1
+size = Vector2(28, 60)
 
 [sub_resource type="Gradient" id="Gradient_arm"]
 colors = PackedColorArray(0.980392, 0.792157, 0.329412, 1, 0.8, 0.45098, 0.164706, 1)
@@ -25,15 +18,54 @@ width = 48
 height = 8
 fill = 1
 
+[sub_resource type="SpriteFrames" id="SpriteFrames_body"]
+animations = [{
+"frames": [{
+"duration": 0.1,
+"texture": ExtResource("4_picatso_stand")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 0.5,
+"texture": ExtResource("5_picatso_run")
+}, {
+"duration": 0.5,
+"texture": ExtResource("4_picatso_stand")
+}],
+"loop": true,
+"name": &"run",
+"speed": 4.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_foot"]
+size = Vector2(24, 8)
+
 [node name="Player" type="CharacterBody2D"]
 collision_mask = 4
 script = ExtResource("1_0m1pg")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(1, -4)
 shape = SubResource("RectangleShape2D_0d4hy")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-texture = SubResource("GradientTexture2D_x6lsh")
+[node name="Arm" type="Node2D" parent="."]
+position = Vector2(-2, 10)
+script = ExtResource("2_j2e6e")
+paint_blob_scene = ExtResource("3_9y3h4")
+
+[node name="Sprite2D" type="Sprite2D" parent="Arm"]
+scale = Vector2(1, 0.25)
+texture = SubResource("GradientTexture2D_arm")
+offset = Vector2(24, 0)
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+sprite_frames = SubResource("SpriteFrames_body")
+animation = &"idle"
+offset = Vector2(0, -22)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position_smoothing_enabled = true
@@ -48,18 +80,7 @@ collision_mask = 16
 monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="FootArea"]
-position = Vector2(0, 22)
-scale = Vector2(0.7, 0.3)
-shape = SubResource("RectangleShape2D_0d4hy")
+position = Vector2(1, 22)
+shape = SubResource("RectangleShape2D_foot")
 
 [node name="ShootSFX" type="AudioStreamPlayer" parent="."]
-stream = "res://assets/sfx/fire-paintball.wav"
-
-[node name="Arm" type="Node2D" parent="."]
-position = Vector2(4, -4)
-script = ExtResource("2_j2e6e")
-paint_blob_scene = ExtResource("3_9y3h4")
-
-[node name="Sprite2D" type="Sprite2D" parent="Arm"]
-texture = SubResource("GradientTexture2D_arm")
-offset = Vector2(24, 0)

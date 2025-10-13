@@ -3,7 +3,7 @@ extends Control
 # Default volume values
 const DEFAULT_MASTER_VOLUME = 0.8
 const DEFAULT_SFX_VOLUME = 0.9
-const DEFAULT_MUSIC_VOLUME = 0.7
+const DEFAULT_MUSIC_VOLUME = 0.05
 
 var audio_bus_master = AudioServer.get_bus_index("Master")
 var audio_bus_sfx = AudioServer.get_bus_index("SFX")

@@ -49,6 +49,17 @@ var _camera: Camera2D
 var _last_fall_speed: float = 0.0
 var _bounce_bonus_available := true
 var _on_bouncy_surface := false
+var _body_sprite: Sprite2D
+var _facing_direction := 1
+var _body_anim: AnimatedSprite2D
+var _body_base_scale := Vector2.ONE
+var _body_base_offset := Vector2.ZERO
+var _body_base_position := Vector2.ZERO
+var _body_texture_size := Vector2.ZERO
+var _body_base_bottom := 0.0
+var _crouch_scale := Vector2.ONE
+var _is_crouching := false
+var _scale_tween: Tween
 
 func _ready() -> void:
     _ensure_input_actions()
@@ -58,6 +69,26 @@ func _ready() -> void:
     _camera = get_node_or_null("Camera2D")
     if _camera:
         _camera.make_current()
+    _body_sprite = get_node_or_null("Sprite2D")
+    _body_anim = get_node_or_null("AnimatedSprite2D")
+    if _body_sprite:
+        _body_sprite.flip_h = _facing_direction < 0
+    if _body_anim:
+        _body_anim.flip_h = _facing_direction < 0
+        _body_base_scale = _body_anim.scale
+        _body_base_offset = _body_anim.offset
+        _body_base_position = _body_anim.position
+        if _body_anim.sprite_frames:
+            var base_texture := _body_anim.sprite_frames.get_frame_texture("idle", 0)
+            if base_texture:
+                _body_texture_size = base_texture.get_size()
+        if _body_texture_size == Vector2.ZERO:
+            _body_texture_size = Vector2(1, 1)
+        var half_height := (_body_texture_size.y * 0.5)
+        _body_base_bottom = _body_base_position.y + (_body_base_offset.y + half_height) * _body_base_scale.y
+        _crouch_scale = Vector2(_body_base_scale.x * 1.2, _body_base_scale.y * 0.5)
+        _set_body_scale(_body_base_scale)
+        _body_anim.play("idle")
     _foot_area = get_node_or_null("FootArea")
     if _foot_area:
         _foot_area.monitoring = true
@@ -77,6 +108,22 @@ func _physics_process(delta: float) -> void:
         _last_fall_speed = max(_last_fall_speed, current_fall_speed)
     var current_velocity := self.velocity
     var direction := Input.get_axis("move_left", "move_right")
+
+    var wants_crouch := Input.is_action_pressed("crouch") and is_on_floor() and not _on_vine
+    if _is_crouching and not is_on_floor():
+        wants_crouch = false
+    if wants_crouch != _is_crouching:
+        if wants_crouch:
+            _enter_crouch()
+        else:
+            _exit_crouch()
+        _is_crouching = wants_crouch
+
+    if _is_crouching:
+        direction = 0.0
+
+    _update_facing_direction(direction, current_velocity.x)
+    _update_animation_state(direction, current_velocity.x)
 
     if _bouncy_cooldown > 0.0:
         _bouncy_cooldown = max(_bouncy_cooldown - delta, 0.0)
@@ -145,6 +192,10 @@ func _physics_process(delta: float) -> void:
             print("[Player] Climbing vine climb_input=", climb_input, " velocity=", current_velocity)
     elif Input.is_action_just_pressed("jump") and is_on_floor():
         current_velocity.y = JUMP_SPEED
+        if _is_crouching:
+            _exit_crouch()
+            _is_crouching = false
+        _play_jump_squash()
     else:
         current_velocity.y += gravity * delta
 
@@ -153,12 +204,79 @@ func _physics_process(delta: float) -> void:
     move_and_slide()
     _update_camera_offset(delta)
 
+func _update_facing_direction(move_input: float, current_velocity_x: float) -> void:
+    var desired_direction := _facing_direction
+    if move_input != 0.0:
+        desired_direction = int(sign(move_input))
+    elif current_velocity_x != 0.0:
+        desired_direction = int(sign(current_velocity_x))
+
+    if desired_direction == 0:
+        desired_direction = _facing_direction
+
+    if desired_direction != _facing_direction:
+        _facing_direction = desired_direction
+        if _body_sprite:
+            _body_sprite.flip_h = _facing_direction < 0
+        if _body_anim:
+            _body_anim.flip_h = _facing_direction < 0
+
+func _update_animation_state(move_input: float, current_velocity_x: float) -> void:
+    if _body_anim == null:
+        return
+    if _is_crouching:
+        if _body_anim.animation != "idle":
+            _body_anim.play("idle")
+        return
+    var moving: bool = absf(move_input) > 0.01 or absf(current_velocity_x) > 10.0
+    var target := "run" if moving else "idle"
+    if _body_anim.animation != target:
+        _body_anim.play(target)
+
+func _play_jump_squash() -> void:
+    if _body_anim == null:
+        return
+    if _is_crouching:
+        return
+    if _scale_tween and _scale_tween.is_running():
+        _scale_tween.kill()
+    _scale_tween = create_tween()
+    var stretch_scale := Vector2(_body_base_scale.x * 0.8, _body_base_scale.y * 1.2)
+    _scale_tween.tween_method(Callable(self, "_set_body_scale"), _body_base_scale, stretch_scale, 0.09).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    _scale_tween.tween_method(Callable(self, "_set_body_scale"), stretch_scale, _body_base_scale, 0.14).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+
+func _set_body_scale(value: Vector2) -> void:
+    if _body_anim == null:
+        return
+    _body_anim.scale = value
+    var half_height := (_body_texture_size.y * 0.5)
+    var new_y := _body_base_bottom - (_body_base_offset.y + half_height) * value.y
+    _body_anim.position = Vector2(_body_base_position.x, new_y)
+
+func _enter_crouch() -> void:
+    if _body_anim == null:
+        return
+    if _scale_tween and _scale_tween.is_running():
+        _scale_tween.kill()
+    _scale_tween = create_tween()
+    _scale_tween.tween_method(Callable(self, "_set_body_scale"), _body_anim.scale, _crouch_scale, 0.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+    _body_anim.play("idle")
+
+func _exit_crouch() -> void:
+    if _body_anim == null:
+        return
+    if _scale_tween and _scale_tween.is_running():
+        _scale_tween.kill()
+    _scale_tween = create_tween()
+    _scale_tween.tween_method(Callable(self, "_set_body_scale"), _body_anim.scale, _body_base_scale, 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
 func _ensure_input_actions() -> void:
     _ensure_action("move_left", [KEY_A, KEY_LEFT])
     _ensure_action("move_right", [KEY_D, KEY_RIGHT])
     _ensure_action("jump", [KEY_SPACE, KEY_W, KEY_UP])
     _ensure_action("climb_up", [KEY_W, KEY_UP])
     _ensure_action("climb_down", [KEY_S, KEY_DOWN])
+    _ensure_action("crouch", [KEY_S, KEY_DOWN])
 
 func _ensure_action(action_name: String, keycodes: Array) -> void:
     if not InputMap.has_action(action_name):

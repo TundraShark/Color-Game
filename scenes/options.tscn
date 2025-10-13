@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://options"]
 
-[ext_resource type="Script" path="res://scripts/options.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://dnbpeeyf0fyb8" path="res://scripts/options.gd" id="1_script"]
 
 [node name="Options" type="Control"]
 layout_mode = 3
@@ -120,13 +120,21 @@ layout_mode = 2
 text = "100%"
 size_flags_horizontal = 1
 
-[node name="BackButton" type="Button" parent="VBoxContainer"]
-layout_mode = 2
+[node name="BackButton" type="Button" parent="."]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -60.0
+offset_right = 140.0
+offset_bottom = -20.0
+grow_vertical = 0
 text = "Back"
-alignment = 0
 
 [connection signal="toggled" from="VBoxContainer/OptionsContainer/FullscreenContainer/FullscreenCheckBox" to="." method="_on_fullscreen_toggled"]
 [connection signal="value_changed" from="VBoxContainer/OptionsContainer/VolumeContainer/MasterVolumeContainer/MasterVolumeSlider" to="." method="_on_master_volume_changed"]
 [connection signal="value_changed" from="VBoxContainer/OptionsContainer/VolumeContainer/SFXVolumeContainer/SFXVolumeSlider" to="." method="_on_sfx_volume_changed"]
 [connection signal="value_changed" from="VBoxContainer/OptionsContainer/VolumeContainer/MusicVolumeContainer/MusicVolumeSlider" to="." method="_on_music_volume_changed"]
-[connection signal="pressed" from="VBoxContainer/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="BackButton" to="." method="_on_back_pressed"]

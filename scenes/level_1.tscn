@@ -28,6 +28,17 @@ size = Vector2(1338, 32)
 
 [node name="Level1" type="Node2D"]
 
+[node name="BackgroundLayer" type="CanvasLayer" parent="."]
+layer = -100
+
+[node name="Background" type="ColorRect" parent="BackgroundLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.15, 1)
+
 [node name="Player" parent="." instance=ExtResource("1_6aa3b")]
 position = Vector2(-902, -118)
 

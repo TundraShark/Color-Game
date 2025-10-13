@@ -9,8 +9,6 @@ signal color_changed(color: Color, name: String)
 
 const SHOOT_SFX_PATH := "res://assets/sfx/fire-paintball.wav"
 const SHOOT_PITCH_VARIATIONS: Array[float] = [0.12, 0.08, 0.04, 0.0, -0.04, -0.08, -0.12]
-# const SHOOT_PITCH_VARIATIONS: Array[float] = [0.10, 0.08, 0.06, 0.04, 0.02, 0.0, -0.02, -0.04, -0.06, -0.08, -0.10]
-# const SHOOT_PITCH_VARIATIONS: Array[float] = [0.16, 0.12, 0.08, 0.04, 0.0, -0.04, -0.08, -0.12, -0.16]
 
 const COLOR_MAP := {
     KEY_1: {"color": Color(0.4, 0.7, 1.0), "name": "Blue"},
@@ -23,7 +21,7 @@ const COLOR_MAP := {
 
 const COLOR_ORDER := [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6]
 
-var _current_color_key: int = KEY_5
+var _current_color_key: int = KEY_1
 var _current_color: Color = COLOR_MAP[_current_color_key]["color"]
 var _current_color_name: String = COLOR_MAP[_current_color_key]["name"]
 

@@ -9,6 +9,13 @@ const COLOR_PRESET := [
     {"name": "Red", "color": Color(1.0, 0.1, 0.1)}
 ]
 
+const COLOR_TEXTURES := {
+    "Blue": preload("res://assets/game/paint-blue.png"),
+    "Purple": preload("res://assets/game/paint-purple.png"),
+    "Red": preload("res://assets/game/paint-red.png"),
+    "Yellow": preload("res://assets/game/paint-yellow.png")
+}
+
 const ACTIVE_SIZE := 28.0
 const INACTIVE_SIZE := 18.0
 const ACTIVE_ALPHA := 1.0
@@ -38,18 +45,24 @@ func _build_palette() -> void:
         var circle := circle_panel as Panel
         if circle == null:
             continue
-        var style := StyleBoxFlat.new()
-        style.bg_color = COLOR_PRESET[i]["color"]
-        var initial_radius := int(round(INACTIVE_SIZE * 0.5))
-        style.corner_radius_top_left = initial_radius
-        style.corner_radius_top_right = initial_radius
-        style.corner_radius_bottom_right = initial_radius
-        style.corner_radius_bottom_left = initial_radius
+        var color_name := String(COLOR_PRESET[i]["name"])
+        var style: StyleBox
+        if COLOR_TEXTURES.has(color_name):
+            var texture_style := StyleBoxTexture.new()
+            texture_style.texture = COLOR_TEXTURES[color_name]
+            texture_style.draw_center = true
+            style = texture_style
+        else:
+            var flat_style := StyleBoxFlat.new()
+            flat_style.bg_color = COLOR_PRESET[i]["color"]
+            var initial_radius := int(round(INACTIVE_SIZE * 0.5))
+            _set_flat_style_radius(flat_style, initial_radius)
+            style = flat_style
         circle.add_theme_stylebox_override("panel", style)
         circle.modulate = Color(1, 1, 1, INACTIVE_ALPHA)
-        _slot_nodes[COLOR_PRESET[i]["name"]] = slot_control
-        _circle_nodes[COLOR_PRESET[i]["name"]] = circle
-        _circle_styles[COLOR_PRESET[i]["name"]] = style
+        _slot_nodes[color_name] = slot_control
+        _circle_nodes[color_name] = circle
+        _circle_styles[color_name] = style
         _apply_slot_style(slot_control, circle, style, false)
 
 func _connect_to_color_source() -> void:
@@ -90,21 +103,27 @@ func _on_color_changed(_color: Color, color_name: String) -> void:
             continue
         var is_active := color_name_key == color_name
         circle.modulate = Color(1, 1, 1, ACTIVE_ALPHA if is_active else INACTIVE_ALPHA)
-        var style := _circle_styles.get(color_name_key) as StyleBoxFlat
-        if style:
-            style.bg_color = preset["color"]
+        var style: StyleBox = _circle_styles.get(color_name_key) as StyleBox
+        if style is StyleBoxFlat:
+            (style as StyleBoxFlat).bg_color = preset["color"]
         _apply_slot_style(slot, circle, style, is_active)
     _palette.queue_sort()
 
-func _apply_slot_style(slot: Control, circle: Panel, style: StyleBoxFlat, is_active: bool) -> void:
+func _apply_slot_style(slot: Control, circle: Panel, style: StyleBox, is_active: bool) -> void:
     var circle_size := ACTIVE_SIZE if is_active else INACTIVE_SIZE
     slot.custom_minimum_size = Vector2(circle_size, circle_size)
     slot.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
     slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
     circle.custom_minimum_size = Vector2(circle_size, circle_size)
-    if style:
+    if style is StyleBoxFlat:
         var radius := int(round(circle_size * 0.5))
-        style.corner_radius_top_left = radius
-        style.corner_radius_top_right = radius
-        style.corner_radius_bottom_right = radius
-        style.corner_radius_bottom_left = radius
+        _set_flat_style_radius(style, radius)
+
+func _set_flat_style_radius(style: StyleBox, radius: int) -> void:
+    if style == null or not (style is StyleBoxFlat):
+        return
+    var flat_style := style as StyleBoxFlat
+    flat_style.corner_radius_top_left = radius
+    flat_style.corner_radius_top_right = radius
+    flat_style.corner_radius_bottom_right = radius
+    flat_style.corner_radius_bottom_left = radius

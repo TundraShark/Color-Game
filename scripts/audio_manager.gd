@@ -1,9 +1,12 @@
 extends Node
 
-const MUSIC_STREAM_PATH := "res://assets/bgm/bgm-test.ogg"
+const MUSIC_STREAM_PATH := "res://assets/bgm/bgm-1.ogg"
 const MUSIC_FADE_DURATION := 1.0
 const MUSIC_START_VOLUME_DB := -18.0
 const MUSIC_SILENCE_VOLUME_DB := -40.0
+const DEFAULT_MASTER_VOLUME := 0.8
+const DEFAULT_SFX_VOLUME := 0.9
+const DEFAULT_MUSIC_VOLUME := 0.05
 
 var _base_stream: AudioStream
 var _music_players: Array[AudioStreamPlayer] = []
@@ -21,6 +24,7 @@ func _ready() -> void:
     else:
         push_warning("AudioManager could not load music stream at %s" % MUSIC_STREAM_PATH)
     _init_music_players()
+    _apply_initial_bus_volumes()
     set_process(true)
     ensure_music_playing()
 
@@ -97,6 +101,18 @@ func _prepare_player(player: AudioStreamPlayer) -> void:
     _ensure_stream(player)
     player.stop()
     player.volume_db = MUSIC_SILENCE_VOLUME_DB
+
+func _apply_initial_bus_volumes() -> void:
+    _set_bus_linear("Master", DEFAULT_MASTER_VOLUME)
+    _set_bus_linear("SFX", DEFAULT_SFX_VOLUME)
+    _set_bus_linear("Music", DEFAULT_MUSIC_VOLUME)
+
+func _set_bus_linear(bus_name: String, value: float) -> void:
+    var bus_index := AudioServer.get_bus_index(bus_name)
+    if bus_index == -1:
+        push_warning("AudioManager could not find audio bus '%s'" % bus_name)
+        return
+    AudioServer.set_bus_volume_db(bus_index, linear_to_db(value))
 
 func _start_crossfade() -> void:
     if _music_players.size() < 2:
