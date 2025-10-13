@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Color Game"
 run/main_scene="res://scenes/main_menu.tscn"
-config/features=PackedStringArray("4.5", "GL Compatibility")
+config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [audio]
@@ -44,6 +44,10 @@ bus_layout={
 "bus_1": "SFX",
 "bus_2": "Music"
 }
+
+[autoload]
+
+AudioManager="*res://scripts/audio_manager.gd"
 
 [editor_plugins]
 

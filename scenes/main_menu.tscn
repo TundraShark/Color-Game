@@ -1,20 +1,15 @@
-[gd_scene load_steps=2 format=3 uid="uid://main_menu"]
+[gd_scene load_steps=2 format=3 uid="uid://d2q0hilqd7vt2"]
 
-[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://osdre6eo4jvy" path="res://scripts/main_menu.gd" id="1_script"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_script")
-
-[node name="Background" type="ColorRect" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-color = Color(0.1, 0.1, 0.15, 1)
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -27,50 +22,44 @@ offset_left = -200.0
 offset_top = -150.0
 offset_right = 200.0
 offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_constants/separation = 20
 
 [node name="Title" type="Label" parent="VBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 48
 text = "Placeholder Title"
 horizontal_alignment = 1
 vertical_alignment = 1
-theme_override_font_sizes/font_size = 48
 
 [node name="ButtonsContainer" type="VBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 15
 
 [node name="PlayButton" type="Button" parent="VBoxContainer/ButtonsContainer"]
-layout_mode = 2
-text = "Play"
-alignment = 1
 custom_minimum_size = Vector2(300, 80)
+layout_mode = 2
 theme_override_font_sizes/font_size = 24
-horizontal_alignment = 1
+text = "Play"
 
 [node name="OptionsButton" type="Button" parent="VBoxContainer/ButtonsContainer"]
-layout_mode = 2
-text = "Options"
-alignment = 1
 custom_minimum_size = Vector2(300, 80)
+layout_mode = 2
 theme_override_font_sizes/font_size = 24
-horizontal_alignment = 1
+text = "Options"
 
 [node name="CreditsButton" type="Button" parent="VBoxContainer/ButtonsContainer"]
-layout_mode = 2
-text = "Credits & Supporters"
-alignment = 1
 custom_minimum_size = Vector2(300, 80)
+layout_mode = 2
 theme_override_font_sizes/font_size = 24
-horizontal_alignment = 1
+text = "Credits & Supporters"
 
 [node name="ExitButton" type="Button" parent="VBoxContainer/ButtonsContainer"]
-layout_mode = 2
-text = "Exit"
-alignment = 1
 custom_minimum_size = Vector2(300, 80)
+layout_mode = 2
 theme_override_font_sizes/font_size = 24
-horizontal_alignment = 1
+text = "Exit"
 
 [connection signal="pressed" from="VBoxContainer/ButtonsContainer/PlayButton" to="." method="_on_play_pressed"]
 [connection signal="pressed" from="VBoxContainer/ButtonsContainer/OptionsButton" to="." method="_on_options_pressed"]

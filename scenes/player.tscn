@@ -52,6 +52,9 @@ position = Vector2(0, 22)
 scale = Vector2(0.7, 0.3)
 shape = SubResource("RectangleShape2D_0d4hy")
 
+[node name="ShootSFX" type="AudioStreamPlayer" parent="."]
+stream = "res://assets/sfx/fire-paintball.wav"
+
 [node name="Arm" type="Node2D" parent="."]
 position = Vector2(4, -4)
 script = ExtResource("2_j2e6e")

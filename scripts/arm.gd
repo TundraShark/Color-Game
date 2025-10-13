@@ -7,6 +7,11 @@ signal color_changed(color: Color, name: String)
 @export var muzzle_offset := Vector2(24, 0)
 @export var projectile_speed := 750.0
 
+const SHOOT_SFX_PATH := "res://assets/sfx/fire-paintball.wav"
+const SHOOT_PITCH_VARIATIONS: Array[float] = [0.12, 0.08, 0.04, 0.0, -0.04, -0.08, -0.12]
+# const SHOOT_PITCH_VARIATIONS: Array[float] = [0.10, 0.08, 0.06, 0.04, 0.02, 0.0, -0.02, -0.04, -0.06, -0.08, -0.10]
+# const SHOOT_PITCH_VARIATIONS: Array[float] = [0.16, 0.12, 0.08, 0.04, 0.0, -0.04, -0.08, -0.12, -0.16]
+
 const COLOR_MAP := {
     KEY_1: {"color": Color(0.4, 0.7, 1.0), "name": "Blue"},
     KEY_2: {"color": Color(1.0, 0.9, 0.0), "name": "Yellow"},
@@ -24,10 +29,26 @@ var _current_color_name: String = COLOR_MAP[_current_color_key]["name"]
 
 var _cooldown := 0.0
 
+var _shoot_sfx: AudioStreamPlayer
+var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
+
 func _ready() -> void:
     if paint_blob_scene == null:
         push_warning("Arm has no paint_blob_scene assigned")
     add_to_group("paint_color_source")
+    _rng.randomize()
+    _shoot_sfx = get_parent().get_node_or_null("ShootSFX")
+    if _shoot_sfx:
+        _shoot_sfx.bus = "SFX"
+        if not _shoot_sfx.stream:
+            var stream: AudioStream = load(SHOOT_SFX_PATH)
+            if stream:
+                _shoot_sfx.stream = stream
+            else:
+                push_warning("Arm could not load shoot SFX at %s" % SHOOT_SFX_PATH)
+        print("[Arm] SFX node ready stream=", _shoot_sfx.stream)
+    else:
+        print("[Arm] Error: ShootSFX node not found")
     _emit_color_changed()
 
 func _process(delta: float) -> void:
@@ -54,6 +75,17 @@ func _unhandled_input(event: InputEvent) -> void:
 func _fire() -> void:
     if _cooldown > 0.0 or paint_blob_scene == null:
         return
+
+    if _shoot_sfx:
+        if SHOOT_PITCH_VARIATIONS.size() > 0:
+            var pitch_offset: float = SHOOT_PITCH_VARIATIONS[_rng.randi_range(0, SHOOT_PITCH_VARIATIONS.size() - 1)]
+            _shoot_sfx.pitch_scale = 1.0 + pitch_offset
+        if _shoot_sfx.playing:
+            _shoot_sfx.stop()
+        _shoot_sfx.play()
+        print("[Arm] SFX playing for fire action")
+    else:
+        print("[Arm] Error: Cannot play SFX, node not found")
 
     var muzzle_global := global_position + (global_transform.x * muzzle_offset.x) + (global_transform.y * muzzle_offset.y)
     var paint_blob := paint_blob_scene.instantiate()

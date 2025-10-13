@@ -10,4 +10,3 @@
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="ColorIndicator" parent="UI" instance=ExtResource("2_mb1p3")]
-layout_mode = 3
