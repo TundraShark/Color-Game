@@ -14,6 +14,17 @@ const CONVEYOR_LAYER_MASK := 64
 const VINE_LAYER_MASK := 128
 const BOUNCY_DEFAULT_STRENGTH := 900.0
 const AIR_FRICTION := 200.0
+const SLOPE_DETECTION_NORMAL_Y := 0.995
+const SLOPE_MIN_NORMAL_X := 0.08
+const SLOPE_SLIDE_ACCEL := 650.0
+const SLOPE_SLIDE_MAX_SPEED := 520.0
+const CAT_MEOW_PATH := "res://assets/sfx/cat-meow.wav"
+const CAT_PURR_PATHS := [
+    "res://assets/sfx/cat-purr-1.wav",
+    "res://assets/sfx/cat-purr-2.wav",
+    "res://assets/sfx/cat-purr-3.wav"
+]
+const CAT_PITCH_VARIATIONS: Array[float] = [0.12, 0.08, 0.04, 0.0, -0.04, -0.08, -0.12]
 @export var conveyor_push_speed := 220.0
 @export var conveyor_accel := 900.0
 @export var climb_speed := 210.0
@@ -27,6 +38,7 @@ const AIR_FRICTION := 200.0
 @export var bounce_bonus_multiplier := 1.2
 const CLIMB_DETECTION_RADIUS := 22.0
 const CLIMB_DETECTION_OFFSET := Vector2(0, -8)
+const BULLET_TIME_SCALE := 0.1
 
 var gravity: float = 980.0
 var _on_slippery_paint := false
@@ -60,12 +72,28 @@ var _body_base_bottom := 0.0
 var _crouch_scale := Vector2.ONE
 var _is_crouching := false
 var _scale_tween: Tween
+var _collision_shape: CollisionShape2D
+var _collision_rect: RectangleShape2D
+var _collision_base_size := Vector2.ZERO
+var _collision_base_position := Vector2.ZERO
+var _collision_base_bottom := 0.0
+var _meow_sfx: AudioStreamPlayer
+var _purr_sfx: AudioStreamPlayer
+var _purr_streams: Array[AudioStream] = []
+var _rng := RandomNumberGenerator.new()
+var _bullet_time_active := false
+var _bullet_time_prev_scale := 1.0
+var _slope_slide_speed := 0.0
+var _slope_slide_direction := Vector2.ZERO
+var _slope_slide_retained_velocity := Vector2.ZERO
 
 func _ready() -> void:
     _ensure_input_actions()
     gravity = float(ProjectSettings.get_setting("physics/2d/default_gravity"))
     z_index = 50
     _vine_query_shape.radius = CLIMB_DETECTION_RADIUS
+    _rng.randomize()
+    _bullet_time_prev_scale = Engine.time_scale
     _camera = get_node_or_null("Camera2D")
     if _camera:
         _camera.make_current()
@@ -89,6 +117,26 @@ func _ready() -> void:
         _crouch_scale = Vector2(_body_base_scale.x * 1.2, _body_base_scale.y * 0.5)
         _set_body_scale(_body_base_scale)
         _body_anim.play("idle")
+    _collision_shape = get_node_or_null("CollisionShape2D")
+    if _collision_shape:
+        _collision_base_position = _collision_shape.position
+        if _collision_shape.shape is RectangleShape2D:
+            _collision_rect = _collision_shape.shape
+            _collision_base_size = _collision_rect.size
+            _collision_base_bottom = _collision_base_position.y + (_collision_base_size.y * 0.5)
+        else:
+            _collision_rect = null
+    _meow_sfx = get_node_or_null("MeowSFX")
+    if _meow_sfx:
+        if _meow_sfx.stream == null:
+            var meow_stream: AudioStream = load(CAT_MEOW_PATH)
+            if meow_stream:
+                _meow_sfx.stream = meow_stream
+        _meow_sfx.bus = "SFX"
+    _purr_sfx = get_node_or_null("PurrSFX")
+    if _purr_sfx:
+        _load_purr_streams()
+        _purr_sfx.bus = "SFX"
     _foot_area = get_node_or_null("FootArea")
     if _foot_area:
         _foot_area.monitoring = true
@@ -102,12 +150,19 @@ func _ready() -> void:
     else:
         pass
 
+func _exit_tree() -> void:
+    if _bullet_time_active:
+        Engine.time_scale = _bullet_time_prev_scale
+        _bullet_time_active = false
+
 func _physics_process(delta: float) -> void:
     var current_fall_speed: float = max(-velocity.y, 0.0)
     if current_fall_speed > 0.0:
         _last_fall_speed = max(_last_fall_speed, current_fall_speed)
     var current_velocity := self.velocity
     var direction := Input.get_axis("move_left", "move_right")
+
+    _update_bullet_time_state()
 
     var wants_crouch := Input.is_action_pressed("crouch") and is_on_floor() and not _on_vine
     if _is_crouching and not is_on_floor():
@@ -119,8 +174,16 @@ func _physics_process(delta: float) -> void:
             _exit_crouch()
         _is_crouching = wants_crouch
 
+    var on_slope := _update_slope_slide_state(delta)
     if _is_crouching:
         direction = 0.0
+
+    if Input.is_action_just_pressed("cat_meow"):
+        _play_meow()
+    if Input.is_action_just_pressed("cat_purr"):
+        _play_purr()
+    if Input.is_action_just_pressed("level_restart"):
+        _restart_level_if_possible()
 
     _update_facing_direction(direction, current_velocity.x)
     _update_animation_state(direction, current_velocity.x)
@@ -156,7 +219,13 @@ func _physics_process(delta: float) -> void:
     if conveyor_active and _conveyor_contacts > 0:
         var direction_factor: float = clamp(_conveyor_direction_sum / float(max(_conveyor_contacts, 1)), -1.0, 1.0)
         conveyor_target = direction_factor * conveyor_push_speed
-    if direction != 0.0:
+    if not is_on_floor() and abs(current_velocity.x) > abs(target_speed):
+        target_speed = current_velocity.x
+    if on_slope and _is_crouching:
+        var slide_velocity: Vector2 = _slope_slide_direction * _slope_slide_speed
+        current_velocity = slide_velocity
+        _slope_slide_retained_velocity = slide_velocity
+    elif direction != 0.0:
         var accel := ACCELERATION if is_on_floor() else AIR_ACCELERATION
         if _on_vine:
             accel = climb_accel
@@ -166,30 +235,39 @@ func _physics_process(delta: float) -> void:
     elif conveyor_active:
         current_velocity.x = move_toward(current_velocity.x, conveyor_target, conveyor_accel * delta)
     else:
+        var applying_ground_friction := not (on_slope and _is_crouching)
         var base_friction := FRICTION if (is_on_floor() or _on_vine) else AIR_FRICTION
         if _on_vine:
             base_friction = climb_accel
         elif is_on_floor() and _on_slippery_paint:
             base_friction = SLIPPERY_FRICTION
-        var decel := base_friction * delta
-        if abs(current_velocity.x) <= decel:
+        var retaining_slope_speed := not is_on_floor() and _slope_slide_retained_velocity != Vector2.ZERO
+        if applying_ground_friction and not retaining_slope_speed:
+            var decel := base_friction * delta
+            if abs(current_velocity.x) <= decel:
+                current_velocity.x = 0.0
+            else:
+                current_velocity.x -= sign(current_velocity.x) * decel
+
+    if _is_crouching and not on_slope:
+        var crouch_decel := FRICTION * 2.0 * delta
+        if abs(current_velocity.x) <= crouch_decel:
             current_velocity.x = 0.0
         else:
-            current_velocity.x -= sign(current_velocity.x) * decel
+            current_velocity.x -= sign(current_velocity.x) * crouch_decel
 
     if _foot_area and Engine.get_frames_drawn() % 15 == 0:
         pass
 
     var climb_input := Input.get_axis("climb_up", "climb_down")
+
     if _on_vine:
         if Input.is_action_just_pressed("jump"):
             _on_vine = false
             current_velocity.y = JUMP_SPEED
-            print("[Player] Jumped off vine")
         else:
             var target_climb := climb_input * climb_speed
             current_velocity.y = move_toward(current_velocity.y, target_climb, climb_accel * delta)
-            print("[Player] Climbing vine climb_input=", climb_input, " velocity=", current_velocity)
     elif Input.is_action_just_pressed("jump") and is_on_floor():
         current_velocity.y = JUMP_SPEED
         if _is_crouching:
@@ -199,10 +277,65 @@ func _physics_process(delta: float) -> void:
     else:
         current_velocity.y += gravity * delta
 
-    current_velocity.x = clamp(current_velocity.x, -max_speed, max_speed)
+    if on_slope and _is_crouching:
+        var clamped_speed: float = clamp(_slope_slide_speed, 0.0, SLOPE_SLIDE_MAX_SPEED)
+        var slide_velocity: Vector2 = _slope_slide_direction * clamped_speed
+        current_velocity = slide_velocity
+        _slope_slide_retained_velocity = slide_velocity
+    else:
+        var horizontal_cap := max_speed
+        if on_slope:
+            horizontal_cap = max(horizontal_cap, _slope_slide_speed)
+        if _slope_slide_retained_velocity != Vector2.ZERO and not is_on_floor():
+            if sign(current_velocity.x) == 0 or sign(current_velocity.x) == sign(_slope_slide_retained_velocity.x):
+                var retained_x := _slope_slide_retained_velocity.x
+                if abs(current_velocity.x) < abs(retained_x):
+                    current_velocity.x = retained_x
+                horizontal_cap = max(horizontal_cap, abs(retained_x))
+            else:
+                _slope_slide_retained_velocity = Vector2.ZERO
+        current_velocity.x = clamp(current_velocity.x, -horizontal_cap, horizontal_cap)
     self.velocity = current_velocity
     move_and_slide()
     _update_camera_offset(delta)
+
+    if is_on_floor() and (not on_slope or not _is_crouching):
+        _slope_slide_retained_velocity = Vector2.ZERO
+
+func _update_slope_slide_state(delta: float) -> bool:
+    if not is_on_floor():
+        _slope_slide_speed = 0.0
+        _slope_slide_direction = Vector2.ZERO
+        return false
+    var floor_normal: Vector2 = get_floor_normal()
+    if floor_normal == Vector2.ZERO:
+        _slope_slide_speed = 0.0
+        _slope_slide_direction = Vector2.ZERO
+        return false
+    floor_normal = floor_normal.normalized()
+    var alignment: float = abs(floor_normal.dot(Vector2.UP))
+    if alignment >= SLOPE_DETECTION_NORMAL_Y and abs(floor_normal.x) < SLOPE_MIN_NORMAL_X:
+        _slope_slide_speed = 0.0
+        _slope_slide_direction = Vector2.ZERO
+        return false
+    var tangent := Vector2(-floor_normal.y, floor_normal.x)
+    var tangent_length := tangent.length()
+    if tangent_length < 0.0001:
+        _slope_slide_speed = 0.0
+        _slope_slide_direction = Vector2.ZERO
+        return false
+    tangent /= tangent_length
+    if tangent.dot(Vector2.DOWN) <= 0.0:
+        tangent = -tangent
+    _slope_slide_direction = tangent
+    if not _is_crouching:
+        _slope_slide_speed = 0.0
+        return false
+    var velocity_along_slope := self.velocity.dot(_slope_slide_direction)
+    var gravity_along_slope: float = max(0.0, gravity * delta * _slope_slide_direction.dot(Vector2.DOWN))
+    var base_speed: float = max(_slope_slide_speed, abs(velocity_along_slope))
+    _slope_slide_speed = clamp(base_speed + gravity_along_slope + SLOPE_SLIDE_ACCEL * delta, 0.0, SLOPE_SLIDE_MAX_SPEED)
+    return true
 
 func _update_facing_direction(move_input: float, current_velocity_x: float) -> void:
     var desired_direction := _facing_direction
@@ -261,6 +394,7 @@ func _enter_crouch() -> void:
     _scale_tween = create_tween()
     _scale_tween.tween_method(Callable(self, "_set_body_scale"), _body_anim.scale, _crouch_scale, 0.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
     _body_anim.play("idle")
+    _apply_collider_crouch_scale(_crouch_scale.y / _body_base_scale.y)
 
 func _exit_crouch() -> void:
     if _body_anim == null:
@@ -269,6 +403,90 @@ func _exit_crouch() -> void:
         _scale_tween.kill()
     _scale_tween = create_tween()
     _scale_tween.tween_method(Callable(self, "_set_body_scale"), _body_anim.scale, _body_base_scale, 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+    _apply_collider_crouch_scale(1.0)
+
+func _apply_collider_crouch_scale(scale_factor: float) -> void:
+    if _collision_rect == null or _collision_shape == null:
+        return
+    scale_factor = clamp(scale_factor, 0.1, 1.5)
+    var new_height := _collision_base_size.y * scale_factor
+    _collision_rect.size = Vector2(_collision_base_size.x, new_height)
+    var new_pos_y := _collision_base_bottom - (new_height * 0.5)
+    _collision_shape.position = Vector2(_collision_base_position.x, new_pos_y)
+
+func _play_meow() -> void:
+    if _meow_sfx == null or _meow_sfx.stream == null:
+        return
+    _apply_random_pitch(_meow_sfx)
+    if _meow_sfx.playing:
+        _meow_sfx.stop()
+    _meow_sfx.play()
+
+func _play_purr() -> void:
+    if _purr_sfx == null:
+        return
+    if _purr_streams.is_empty():
+        _load_purr_streams()
+    if _purr_streams.is_empty():
+        return
+    var stream_index := _rng.randi_range(0, _purr_streams.size() - 1)
+    var stream := _purr_streams[stream_index]
+    if stream == null:
+        return
+    _purr_sfx.stream = stream
+    _apply_random_pitch(_purr_sfx)
+    if _purr_sfx.playing:
+        _purr_sfx.stop()
+    _purr_sfx.play()
+
+func _apply_random_pitch(player: AudioStreamPlayer) -> void:
+    if player == null:
+        return
+    if CAT_PITCH_VARIATIONS.is_empty():
+        player.pitch_scale = 1.0
+        return
+    var index := _rng.randi_range(0, CAT_PITCH_VARIATIONS.size() - 1)
+    var variation := CAT_PITCH_VARIATIONS[index]
+    player.pitch_scale = 1.0 + variation
+
+func _load_purr_streams() -> void:
+    _purr_streams.clear()
+    for path in CAT_PURR_PATHS:
+        var stream: AudioStream = load(path)
+        if stream:
+            _purr_streams.append(stream)
+
+func _restart_level_if_possible() -> void:
+    var tree := get_tree()
+    if tree == null:
+        return
+    var current_scene := tree.current_scene
+    if current_scene == null:
+        return
+    var scene_path := current_scene.scene_file_path
+    var reload_path := ""
+    if not scene_path.is_empty() and scene_path.find("/scenes/levels/") != -1:
+        reload_path = scene_path
+    else:
+        var level_path := _find_level_scene_path(current_scene)
+        if not level_path.is_empty():
+            reload_path = scene_path if not scene_path.is_empty() else level_path
+    if reload_path.is_empty():
+        return
+    tree.change_scene_to_file(reload_path)
+
+func _find_level_scene_path(node: Node) -> String:
+    if node == null:
+        return ""
+    var path := node.scene_file_path
+    if not path.is_empty() and path.find("/scenes/levels/") != -1:
+        return path
+    for child in node.get_children():
+        if child is Node:
+            var result := _find_level_scene_path(child)
+            if not result.is_empty():
+                return result
+    return ""
 
 func _ensure_input_actions() -> void:
     _ensure_action("move_left", [KEY_A, KEY_LEFT])
@@ -277,6 +495,10 @@ func _ensure_input_actions() -> void:
     _ensure_action("climb_up", [KEY_W, KEY_UP])
     _ensure_action("climb_down", [KEY_S, KEY_DOWN])
     _ensure_action("crouch", [KEY_S, KEY_DOWN])
+    _ensure_action("cat_meow", [KEY_M])
+    _ensure_action("cat_purr", [KEY_P])
+    _ensure_action("level_restart", [KEY_R])
+    _ensure_action("bullet_time", [KEY_B])
 
 func _ensure_action(action_name: String, keycodes: Array) -> void:
     if not InputMap.has_action(action_name):
@@ -324,7 +546,12 @@ func _on_foot_area_exited(area: Area2D) -> void:
 func _update_slippery_state() -> void:
     if not is_on_floor():
         return
-    var space := get_world_2d().direct_space_state
+    var world := get_world_2d()
+    if world == null:
+        return
+    var space := world.direct_space_state
+    if space == null:
+        return
     var params := PhysicsPointQueryParameters2D.new()
     params.collision_mask = 16
     params.collide_with_areas = true
@@ -347,7 +574,12 @@ func _scan_for_bouncy_surfaces(current_velocity: Vector2) -> void:
         return
     if current_velocity.y < -20.0:
         return
-    var space := get_world_2d().direct_space_state
+    var world := get_world_2d()
+    if world == null:
+        return
+    var space := world.direct_space_state
+    if space == null:
+        return
     var params := PhysicsPointQueryParameters2D.new()
     params.collision_mask = BOUNCY_LAYER_MASK
     params.collide_with_areas = true
@@ -410,7 +642,13 @@ func _update_conveyor_state() -> void:
             _on_conveyor = false
         return
 
-    var space := get_world_2d().direct_space_state
+    var world := get_world_2d()
+    if world == null:
+        _conveyor_contacts = 0
+        _conveyor_direction_sum = 0.0
+        _on_conveyor = false
+        return
+    var space := world.direct_space_state
     if space == null:
         _conveyor_contacts = 0
         _conveyor_direction_sum = 0.0
@@ -443,7 +681,12 @@ func _update_conveyor_state() -> void:
         _conveyor_direction_sum = 0.0
 
 func _update_vine_state() -> void:
-    var space := get_world_2d().direct_space_state
+    var world := get_world_2d()
+    if world == null:
+        _vine_contacts = 0
+        _on_vine = false
+        return
+    var space := world.direct_space_state
     if space == null:
         _vine_contacts = 0
         _on_vine = false
@@ -460,13 +703,6 @@ func _update_vine_state() -> void:
     var previous_on_vine := _on_vine
     _vine_contacts = results.size()
     _on_vine = _vine_contacts > 0
-    if _on_vine and not previous_on_vine:
-        print("[Player] Vine contact detected at ", global_position, " offset=", CLIMB_DETECTION_OFFSET, " radius=", CLIMB_DETECTION_RADIUS, " contacts=", _vine_contacts)
-        for result in results:
-            if result.has("collider") and result.collider:
-                print("[Player] Vine collider=", result.collider.name)
-    elif not _on_vine and previous_on_vine:
-        print("[Player] Vine contact lost")
 
 func _update_camera_offset(delta: float) -> void:
     if _camera == null:
@@ -501,3 +737,13 @@ func _update_camera_offset(delta: float) -> void:
 
     var t: float = clamp(delta * camera_mouse_follow_speed, 0.0, 1.0)
     _camera.offset = _camera.offset.lerp(desired_offset, t)
+
+func _update_bullet_time_state() -> void:
+    var wants_bullet_time := Input.is_action_pressed("bullet_time")
+    if wants_bullet_time and not _bullet_time_active:
+        _bullet_time_prev_scale = Engine.time_scale
+        Engine.time_scale = clamp(BULLET_TIME_SCALE, 0.01, _bullet_time_prev_scale)
+        _bullet_time_active = true
+    elif not wants_bullet_time and _bullet_time_active:
+        Engine.time_scale = _bullet_time_prev_scale
+        _bullet_time_active = false

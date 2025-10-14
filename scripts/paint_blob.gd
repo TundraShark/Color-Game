@@ -77,6 +77,10 @@ func _spawn_decals(point: Vector2, normal: Vector2, impact_velocity: Vector2) ->
         _spawn_vine(point, orientation_value)
         return
 
+    if paint_color_name == "Red":
+        _clear_paint_decals(point)
+        return
+
     if decal_scene == null:
         return
 
@@ -95,6 +99,19 @@ func _spawn_decals(point: Vector2, normal: Vector2, impact_velocity: Vector2) ->
         if decal_instance.has_method("configure"):
             decal_instance.configure(_rng, safe_normal, paint_color, paint_color_name, impact_velocity)
         parent_node.add_child(decal_instance)
+
+func _clear_paint_decals(point: Vector2) -> void:
+    var tree := get_tree()
+    if tree == null:
+        return
+    var radius := 40.0
+    for node in tree.get_nodes_in_group("paint_decal"):
+        if node is Node2D:
+            var decal := node as Node2D
+            if not decal.is_inside_tree():
+                continue
+            if decal.global_position.distance_to(point) <= radius:
+                decal.queue_free()
 
 func _spawn_vine(point: Vector2, orientation_value: int) -> void:
     if orientation_value == 0:
@@ -155,7 +172,10 @@ func _determine_vine_orientation(surface_normal: Vector2) -> int:
     return 0
 
 func _classify_surface_orientation(point: Vector2, surface_normal: Vector2) -> int:
-    var space := get_world_2d().direct_space_state
+    var world := get_world_2d()
+    if world == null:
+        return -1
+    var space := world.direct_space_state
     if space == null:
         return -1
 

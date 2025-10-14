@@ -57,6 +57,8 @@ func _ensure_nodes_initialized() -> void:
         area = get_node_or_null("Area")
 
 func _ready() -> void:
+    if not is_in_group("paint_decal"):
+        add_to_group("paint_decal")
     _ensure_nodes_initialized()
     if swatch:
         _default_texture = swatch.texture

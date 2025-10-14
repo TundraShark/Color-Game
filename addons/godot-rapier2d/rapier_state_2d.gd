@@ -96,8 +96,6 @@ func import_state(file_name: String = "user://state.json"):
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_ENTER_TREE:
-		print("enter tree")
 	if what == NOTIFICATION_EXIT_TREE:
 		save_state(false)
 		FileAccess.open("user://save.json", FileAccess.WRITE).store_string(

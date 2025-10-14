@@ -1,22 +1,14 @@
-[gd_scene load_steps=11 format=3 uid="uid://df8t8w2wkr3sf"]
+[gd_scene load_steps=10 format=3 uid="uid://df8t8w2wkr3sf"]
 
 [ext_resource type="Script" uid="uid://rmtxc85f84el" path="res://scripts/player.gd" id="1_0m1pg"]
-[ext_resource type="Script" uid="uid://b0we45kolj8k6" path="res://scripts/arm.gd" id="2_j2e6e"]
+[ext_resource type="Script" uid="uid://d1tbmmthwhdqw" path="res://scripts/tail.gd" id="2_j2e6e"]
 [ext_resource type="PackedScene" uid="uid://djb5s2rswpunk" path="res://scenes/paint_blob.tscn" id="3_9y3h4"]
 [ext_resource type="Texture2D" uid="uid://cyacxsgcs7b68" path="res://assets/game/picatso-stand.webp" id="4_picatso_stand"]
 [ext_resource type="Texture2D" uid="uid://clkft2wname34" path="res://assets/game/picatso-run.webp" id="5_picatso_run"]
+[ext_resource type="Texture2D" uid="uid://ctg5oeujuaogk" path="res://assets/game/picatso-tail.webp" id="6_tail_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0d4hy"]
 size = Vector2(28, 60)
-
-[sub_resource type="Gradient" id="Gradient_arm"]
-colors = PackedColorArray(0.980392, 0.792157, 0.329412, 1, 0.8, 0.45098, 0.164706, 1)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_arm"]
-gradient = SubResource("Gradient_arm")
-width = 48
-height = 8
-fill = 1
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_body"]
 animations = [{
@@ -51,15 +43,17 @@ script = ExtResource("1_0m1pg")
 position = Vector2(1, -4)
 shape = SubResource("RectangleShape2D_0d4hy")
 
-[node name="Arm" type="Node2D" parent="."]
+[node name="Tail" type="Node2D" parent="."]
 position = Vector2(-2, 10)
 script = ExtResource("2_j2e6e")
 paint_blob_scene = ExtResource("3_9y3h4")
 
-[node name="Sprite2D" type="Sprite2D" parent="Arm"]
-scale = Vector2(1, 0.25)
-texture = SubResource("GradientTexture2D_arm")
-offset = Vector2(24, 0)
+[node name="Sprite2D" type="Sprite2D" parent="Tail"]
+position = Vector2(1.00001, -7.15256e-07)
+rotation = 4.71239
+scale = Vector2(0.648936, 0.648936)
+texture = ExtResource("6_tail_tex")
+offset = Vector2(0, 56)
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 scale = Vector2(0.5, 0.5)
@@ -84,3 +78,9 @@ position = Vector2(1, 22)
 shape = SubResource("RectangleShape2D_foot")
 
 [node name="ShootSFX" type="AudioStreamPlayer" parent="."]
+
+[node name="MeowSFX" type="AudioStreamPlayer" parent="."]
+
+[node name="PurrSFX" type="AudioStreamPlayer" parent="."]
+
+[node name="TailSwooshSFX" type="AudioStreamPlayer" parent="."]
