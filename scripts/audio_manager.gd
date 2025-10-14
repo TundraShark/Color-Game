@@ -6,7 +6,8 @@ const MUSIC_START_VOLUME_DB := -18.0
 const MUSIC_SILENCE_VOLUME_DB := -40.0
 const DEFAULT_MASTER_VOLUME := 0.8
 const DEFAULT_SFX_VOLUME := 0.9
-const DEFAULT_MUSIC_VOLUME := 0.05
+const DEFAULT_MUSIC_VOLUME := 0.0
+# const DEFAULT_MUSIC_VOLUME := 0.05
 
 var _base_stream: AudioStream
 var _music_players: Array[AudioStreamPlayer] = []

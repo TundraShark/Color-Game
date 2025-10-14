@@ -18,6 +18,11 @@ const SLOPE_DETECTION_NORMAL_Y := 0.995
 const SLOPE_MIN_NORMAL_X := 0.08
 const SLOPE_SLIDE_ACCEL := 650.0
 const SLOPE_SLIDE_MAX_SPEED := 520.0
+const SLOPE_STEEP_ACCEL_MULT := 2.2
+const SLOPE_STEEP_MAX_MULT := 1.75
+const BOUNCE_CHAIN_DECAY := 0.9
+const BOUNCE_CHAIN_MIN_MULT := 0.75
+const PUSH_FORCE := 320.0
 const CAT_MEOW_PATH := "res://assets/sfx/cat-meow.wav"
 const CAT_PURR_PATHS := [
     "res://assets/sfx/cat-purr-1.wav",
@@ -32,8 +37,8 @@ const CAT_PITCH_VARIATIONS: Array[float] = [0.12, 0.08, 0.04, 0.0, -0.04, -0.08,
 @export var camera_mouse_max_distance := 240.0
 @export var camera_mouse_follow_speed := 8.0
 @export var camera_edge_padding := Vector2(220.0, 160.0)
-@export var bounce_min_speed := 80.0
-@export var bounce_max_speed := 600.0
+@export var bounce_min_speed := 500.0
+@export var bounce_max_speed := 1000.0
 @export var bounce_base_multiplier := 1.0
 @export var bounce_bonus_multiplier := 1.2
 const CLIMB_DETECTION_RADIUS := 22.0
@@ -51,6 +56,7 @@ var SLIPPERY_DECAY_RATE := 180.0
 var SLIPPERY_DECAY_DELAY := 0.4
 var _pending_bounce_strength := 0.0
 var _bouncy_cooldown := 0.0
+var _bounce_chain_multiplier := 1.0
 var _conveyor_contacts := 0
 var _conveyor_direction_sum := 0.0
 var _on_conveyor := false
@@ -86,6 +92,7 @@ var _bullet_time_prev_scale := 1.0
 var _slope_slide_speed := 0.0
 var _slope_slide_direction := Vector2.ZERO
 var _slope_slide_retained_velocity := Vector2.ZERO
+var _slope_slide_max_limit := SLOPE_SLIDE_MAX_SPEED
 
 func _ready() -> void:
     _ensure_input_actions()
@@ -199,6 +206,7 @@ func _physics_process(delta: float) -> void:
     if is_on_floor() and not _on_bouncy_surface:
         _last_fall_speed = 0.0
         _bounce_bonus_available = true
+        _bounce_chain_multiplier = 1.0
 
     if _pending_bounce_strength > 0.0:
         current_velocity.y = -abs(_pending_bounce_strength)
@@ -278,14 +286,14 @@ func _physics_process(delta: float) -> void:
         current_velocity.y += gravity * delta
 
     if on_slope and _is_crouching:
-        var clamped_speed: float = clamp(_slope_slide_speed, 0.0, SLOPE_SLIDE_MAX_SPEED)
+        var clamped_speed: float = clamp(_slope_slide_speed, 0.0, _slope_slide_max_limit)
         var slide_velocity: Vector2 = _slope_slide_direction * clamped_speed
         current_velocity = slide_velocity
         _slope_slide_retained_velocity = slide_velocity
     else:
         var horizontal_cap := max_speed
         if on_slope:
-            horizontal_cap = max(horizontal_cap, _slope_slide_speed)
+            horizontal_cap = max(horizontal_cap, _slope_slide_max_limit)
         if _slope_slide_retained_velocity != Vector2.ZERO and not is_on_floor():
             if sign(current_velocity.x) == 0 or sign(current_velocity.x) == sign(_slope_slide_retained_velocity.x):
                 var retained_x := _slope_slide_retained_velocity.x
@@ -297,6 +305,7 @@ func _physics_process(delta: float) -> void:
         current_velocity.x = clamp(current_velocity.x, -horizontal_cap, horizontal_cap)
     self.velocity = current_velocity
     move_and_slide()
+    _apply_push_to_bodies()
     _update_camera_offset(delta)
 
     if is_on_floor() and (not on_slope or not _is_crouching):
@@ -328,14 +337,40 @@ func _update_slope_slide_state(delta: float) -> bool:
     if tangent.dot(Vector2.DOWN) <= 0.0:
         tangent = -tangent
     _slope_slide_direction = tangent
+    var steepness: float = clamp(abs(floor_normal.x), 0.0, 1.0)
+    var accel_multiplier: float = lerp(1.0, SLOPE_STEEP_ACCEL_MULT, steepness)
+    var max_multiplier: float = lerp(1.0, SLOPE_STEEP_MAX_MULT, steepness)
+    _slope_slide_max_limit = SLOPE_SLIDE_MAX_SPEED * max_multiplier
     if not _is_crouching:
         _slope_slide_speed = 0.0
         return false
     var velocity_along_slope := self.velocity.dot(_slope_slide_direction)
     var gravity_along_slope: float = max(0.0, gravity * delta * _slope_slide_direction.dot(Vector2.DOWN))
     var base_speed: float = max(_slope_slide_speed, abs(velocity_along_slope))
-    _slope_slide_speed = clamp(base_speed + gravity_along_slope + SLOPE_SLIDE_ACCEL * delta, 0.0, SLOPE_SLIDE_MAX_SPEED)
+    _slope_slide_speed = clamp(base_speed + gravity_along_slope + SLOPE_SLIDE_ACCEL * accel_multiplier * delta, 0.0, _slope_slide_max_limit)
     return true
+
+func _apply_push_to_bodies() -> void:
+    if abs(velocity.x) <= 0.01:
+        return
+    var push_direction := Vector2(sign(velocity.x), 0.0)
+    var impulse_strength := PUSH_FORCE * push_direction.x
+    if impulse_strength == 0.0:
+        return
+    for i in range(get_slide_collision_count()):
+        var collision := get_slide_collision(i)
+        if collision == null:
+            continue
+        var collider := collision.get_collider()
+        if collider == null:
+            continue
+        if collider is RigidBody2D:
+            var rigid := collider as RigidBody2D
+            var normal := collision.get_normal()
+            if abs(normal.x) < 0.7:
+                continue
+            var contact_point := collision.get_position()
+            rigid.apply_impulse(push_direction * abs(impulse_strength) * 0.1, contact_point - rigid.global_position)
 
 func _update_facing_direction(move_input: float, current_velocity_x: float) -> void:
     var desired_direction := _facing_direction
@@ -600,10 +635,12 @@ func _scan_for_bouncy_surfaces(current_velocity: Vector2) -> void:
         break
 
 func _queue_bounce(strength: float) -> void:
-    _pending_bounce_strength = max(_pending_bounce_strength, strength)
+    var adjusted_strength: float = clamp(strength * _bounce_chain_multiplier, bounce_min_speed, bounce_max_speed)
+    _pending_bounce_strength = max(_pending_bounce_strength, adjusted_strength)
     _slippery_decay_timer = SLIPPERY_DECAY_DELAY
     _bouncy_cooldown = 0.1
     _last_fall_speed = 0.0
+    _bounce_chain_multiplier = max(_bounce_chain_multiplier * BOUNCE_CHAIN_DECAY, BOUNCE_CHAIN_MIN_MULT)
 
 func _handle_bouncy_contact(target: Object) -> void:
     if _bouncy_cooldown > 0.0:
@@ -630,7 +667,7 @@ func _handle_bouncy_contact(target: Object) -> void:
     var max_bonus_speed: float = capped_fall_speed * 1.2
     var metadata_speed: float = clamp(strength, 0.0, max_bonus_speed)
     target_speed = max(target_speed, metadata_speed)
-    target_speed = clamp(target_speed, capped_fall_speed, max_bonus_speed)
+    target_speed = clamp(target_speed, base_speed, max_bonus_speed)
 
     _queue_bounce(target_speed)
 
@@ -700,7 +737,6 @@ func _update_vine_state() -> void:
     params.collide_with_bodies = false
 
     var results := space.intersect_shape(params, 8)
-    var previous_on_vine := _on_vine
     _vine_contacts = results.size()
     _on_vine = _vine_contacts > 0
 

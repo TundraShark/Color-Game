@@ -119,14 +119,6 @@ func configure(rng: RandomNumberGenerator, normal: Vector2, paint_color_in: Colo
             swatch.self_modulate = Color(1, 1, 1, 1)
         swatch.centered = false
         _apply_decal_collision_size(PAINT_RECT_SIZE)
-    if is_slippery:
-        print_debug("[PaintDecal] Slippery decal created at ", global_position)
-    elif is_bouncy:
-        print_debug("[PaintDecal] Bouncy (yellow) decal created at ", global_position, " strength=", bounce_strength)
-    elif is_conveyor:
-        print_debug("[PaintDecal] Conveyor decal (orange) created at ", global_position, " dir=", _conveyor_direction)
-    else:
-        print_debug("[PaintDecal] Non-slippery decal created at ", global_position, " color=", paint_name)
 
     rotation = 0.0
     # TODO: Add orientation-specific decals for walls and ceilings when dedicated textures exist.
@@ -195,20 +187,17 @@ func _refresh_area_state() -> void:
             area.add_to_group("slippery_paint")
         if not is_in_group("slippery_paint"):
             add_to_group("slippery_paint")
-        print_debug("[PaintDecal] Area enabled for slippery paint at ", global_position)
     else:
         if area.is_in_group("slippery_paint"):
             area.remove_from_group("slippery_paint")
         if is_in_group("slippery_paint"):
             remove_from_group("slippery_paint")
-        print_debug("[PaintDecal] Area disabled for non-slippery paint at ", global_position)
 
     if is_bouncy:
         if not area.is_in_group("bouncy_paint"):
             area.add_to_group("bouncy_paint")
         if not is_in_group("bouncy_paint"):
             add_to_group("bouncy_paint")
-        print_debug("[PaintDecal] Area enabled for bouncy paint at ", global_position)
     else:
         if is_in_group("bouncy_paint"):
             remove_from_group("bouncy_paint")
@@ -260,7 +249,6 @@ func _spawn_vine() -> void:
         var vine_node := vine as Node2D
         vine_node.global_position = global_position
         _attach_vine_area(vine_node, _vine_orientation)
-        print_debug("[PaintDecal] Vine scene spawned at ", vine_node.global_position, " orientation=", _vine_orientation)
     parent_node.add_child(vine)
     if vine.has_method("set_vine_orientation"):
         vine.set_vine_orientation(_vine_orientation)
@@ -299,7 +287,6 @@ func _spawn_placeholder_vine() -> void:
 
     vine_root.add_child(vine_line)
     _attach_vine_area(vine_root, _vine_orientation)
-    print_debug("[PaintDecal] Vine placeholder spawned at ", vine_root.global_position, " orientation=", _vine_orientation)
     parent_node.add_child(vine_root)
     _vine_spawned = true
 
@@ -377,7 +364,6 @@ func _attach_vine_area(parent: Node2D, orientation_value: int) -> void:
 
     vine_area.position = area_offset
     parent.add_child(vine_area)
-    print_debug("[PaintDecal] VineArea added", " parent=", parent.name, " local_offset=", area_offset, " size=", shape.size)
 
 func _configure_vine_collision_shape() -> void:
     if area == null:
@@ -394,7 +380,6 @@ func _configure_vine_collision_shape() -> void:
     rect.size = size
     shape_node.shape = rect
     shape_node.position = offset
-    print_debug("[PaintDecal] Decal vine collision shape configured size=", size, " offset=", offset)
 
 func _restore_default_area_shape() -> void:
     _ensure_nodes_initialized()
@@ -406,7 +391,6 @@ func _restore_default_area_shape() -> void:
     if _default_area_shape:
         shape_node.shape = _default_area_shape.duplicate()
     shape_node.position = _default_area_position
-    print_debug("[PaintDecal] Decal area reset to default shape")
 
 func _on_area_body_entered(body: Node) -> void:
     if not is_conveyor:

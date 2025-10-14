@@ -73,12 +73,12 @@ func _spawn_decals(point: Vector2, normal: Vector2, impact_velocity: Vector2) ->
         var orientation_value: int = _classify_surface_orientation(point, safe_normal)
         if orientation_value == -1:
             orientation_value = _determine_vine_orientation(safe_normal)
-        _log_green_hit(point, safe_normal, orientation_value)
         _spawn_vine(point, orientation_value)
         return
 
     if paint_color_name == "Red":
         _clear_paint_decals(point)
+        _clear_vines(point)
         return
 
     if decal_scene == null:
@@ -113,6 +113,33 @@ func _clear_paint_decals(point: Vector2) -> void:
             if decal.global_position.distance_to(point) <= radius:
                 decal.queue_free()
 
+func _clear_vines(point: Vector2) -> void:
+    var tree := get_tree()
+    if tree == null:
+        return
+    var radius := 80.0
+    var radius_sq := radius * radius
+    var nodes_to_free: Array[Node] = []
+    for node in tree.get_nodes_in_group("vine_paint"):
+        if node == null or not node.is_inside_tree():
+            continue
+        if node is Node2D:
+            var node2d := node as Node2D
+            if node2d.global_position.distance_squared_to(point) <= radius_sq and node2d not in nodes_to_free:
+                nodes_to_free.append(node2d)
+        elif node is Area2D:
+            var area := node as Area2D
+            if area.global_position.distance_squared_to(point) <= radius_sq and area not in nodes_to_free:
+                nodes_to_free.append(area)
+        var parent := node.get_parent()
+        if parent is Node2D:
+            var parent2d := parent as Node2D
+            if parent2d.global_position.distance_squared_to(point) <= radius_sq and parent2d not in nodes_to_free:
+                nodes_to_free.append(parent2d)
+    for target in nodes_to_free:
+        if target != null and target.is_inside_tree():
+            target.queue_free()
+
 func _spawn_vine(point: Vector2, orientation_value: int) -> void:
     if orientation_value == 0:
         return
@@ -123,6 +150,8 @@ func _spawn_vine(point: Vector2, orientation_value: int) -> void:
         var placeholder := Node2D.new()
         placeholder.name = "VinePlaceholder"
         placeholder.global_position = point
+        if not placeholder.is_in_group("vine_paint"):
+            placeholder.add_to_group("vine_paint")
 
         var vine_line := Line2D.new()
         vine_line.default_color = paint_color
@@ -150,6 +179,8 @@ func _spawn_vine(point: Vector2, orientation_value: int) -> void:
     if vine_instance is Node2D:
         var vine_node := vine_instance as Node2D
         vine_node.global_position = point
+        if not vine_node.is_in_group("vine_paint"):
+            vine_node.add_to_group("vine_paint")
     if vine_instance.has_method("set_vine_orientation"):
         vine_instance.set_vine_orientation(orientation_value)
     elif vine_instance.has_method("set_orientation"):
@@ -223,15 +254,6 @@ func _probe_distance(space: PhysicsDirectSpaceState2D, origin: Vector2, directio
             return distance
     return INF
 
-func _log_green_hit(point: Vector2, normal: Vector2, orientation_value: int) -> void:
-    var orientation_label := "None"
-    match orientation_value:
-        1:
-            orientation_label = "Horizontal"
-        2:
-            orientation_label = "Vertical"
-    print_debug("[PaintBlob] Green hit at ", point, " normal=", normal, " orientation=", orientation_label)
-
 func _create_vine_area(parent: Node, point: Vector2, orientation_value: int) -> void:
     if parent == null:
         return
@@ -262,6 +284,4 @@ func _create_vine_area(parent: Node, point: Vector2, orientation_value: int) -> 
     collider.shape = shape
     collider.position = offset
     area.add_child(collider)
-
     parent.add_child(area)
-    print_debug("[PaintBlob] Vine climb area created at ", point, " size=", size, " offset=", offset, " orientation=", orientation_value)

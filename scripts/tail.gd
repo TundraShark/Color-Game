@@ -170,6 +170,7 @@ func _melee_swoosh() -> void:
         surfaces.append(hit)
 
     if not surfaces.is_empty():
+        var is_red := _current_color_name.to_lower() == "red"
         var decals_per_surface: int = max(1, int(ceil(float(melee_decal_count) / float(surfaces.size()))))
         for hit_data in surfaces:
             var hit_dict: Dictionary = hit_data
@@ -202,6 +203,10 @@ func _melee_swoosh() -> void:
                 var placement_normal: Vector2 = probe_hit["normal"]
                 if placement_normal == Vector2.ZERO:
                     placement_normal = hit_normal
+                if is_red:
+                    _clear_paint_decals(placement_position)
+                    _clear_vines(placement_position)
+                    continue
                 var decal := _decal_scene.instantiate()
                 if decal is Node2D:
                     var node2d := decal as Node2D
@@ -251,16 +256,49 @@ func _play_melee_sfx() -> void:
         return
     if _melee_swoosh_streams.is_empty():
         return
-    var index := _rng.randi_range(0, _melee_swoosh_streams.size() - 1)
-    var stream: AudioStream = _melee_swoosh_streams[index]
-    if _melee_sfx.stream != stream:
-        _melee_sfx.stream = stream
-    if MELEE_PITCH_VARIATIONS.size() > 0:
-        var pitch_offset: float = MELEE_PITCH_VARIATIONS[_rng.randi_range(0, MELEE_PITCH_VARIATIONS.size() - 1)]
-        _melee_sfx.pitch_scale = 1.0 + pitch_offset
-    if _melee_sfx.playing:
-        _melee_sfx.stop()
+    if _melee_sfx.stream == null:
+        return
+    _melee_sfx.stream = _melee_swoosh_streams[_rng.randi_range(0, _melee_swoosh_streams.size() - 1)]
+    _melee_sfx.pitch_scale = 1.0 + MELEE_PITCH_VARIATIONS[_rng.randi_range(0, MELEE_PITCH_VARIATIONS.size() - 1)]
     _melee_sfx.play()
+
+func _clear_paint_decals(point: Vector2, radius: float = 40.0) -> void:
+    var tree := get_tree()
+    if tree == null:
+        return
+    for node in tree.get_nodes_in_group("paint_decal"):
+        if node is Node2D:
+            var decal := node as Node2D
+            if not decal.is_inside_tree():
+                continue
+            if decal.global_position.distance_to(point) <= radius:
+                decal.queue_free()
+
+func _clear_vines(point: Vector2, radius: float = 80.0) -> void:
+    var tree := get_tree()
+    if tree == null:
+        return
+    var radius_sq := radius * radius
+    var nodes_to_free: Array[Node] = []
+    for node in tree.get_nodes_in_group("vine_paint"):
+        if node == null or not node.is_inside_tree():
+            continue
+        if node is Node2D:
+            var node2d := node as Node2D
+            if node2d.global_position.distance_squared_to(point) <= radius_sq and node2d not in nodes_to_free:
+                nodes_to_free.append(node2d)
+        elif node is Area2D:
+            var area := node as Area2D
+            if area.global_position.distance_squared_to(point) <= radius_sq and area not in nodes_to_free:
+                nodes_to_free.append(area)
+        var parent := node.get_parent()
+        if parent is Node2D:
+            var parent2d := parent as Node2D
+            if parent2d.global_position.distance_squared_to(point) <= radius_sq and parent2d not in nodes_to_free:
+                nodes_to_free.append(parent2d)
+    for target in nodes_to_free:
+        if target != null and target.is_inside_tree():
+            target.queue_free()
 
 func _set_current_color_key(key: int) -> void:
     if not COLOR_MAP.has(key):

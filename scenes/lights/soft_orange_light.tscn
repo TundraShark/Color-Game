@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://duv1mhb7so2cb"]
+
+[ext_resource type="Texture2D" uid="uid://b28e1ep4lf1t8" path="res://scenes/lights/soft_orange_light_gradient.tres" id="1_r1o4l"]
+[ext_resource type="Script" uid="uid://lpfy2l7hg6d7" path="res://scripts/lights/soft_orange_light.gd" id="2_4g10d"]
+
+[node name="SoftOrangeLight" type="Node2D"]
+editor_description = "Invisible orange-hued point light for ambient sources."
+script = ExtResource("2_4g10d")
+
+[node name="Glow" type="PointLight2D" parent="."]
+color = Color(1, 0.72, 0.38, 1)
+energy = 10.0
+texture = ExtResource("1_r1o4l")
+texture_scale = 1.5
