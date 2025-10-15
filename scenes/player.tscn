@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://df8t8w2wkr3sf"]
+[gd_scene load_steps=11 format=3 uid="uid://df8t8w2wkr3sf"]
 
 [ext_resource type="Script" uid="uid://rmtxc85f84el" path="res://scripts/player.gd" id="1_0m1pg"]
 [ext_resource type="Script" uid="uid://d1tbmmthwhdqw" path="res://scripts/tail.gd" id="2_j2e6e"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://cyacxsgcs7b68" path="res://assets/game/picatso-stand.webp" id="4_picatso_stand"]
 [ext_resource type="Texture2D" uid="uid://clkft2wname34" path="res://assets/game/picatso-run.webp" id="5_picatso_run"]
 [ext_resource type="Texture2D" uid="uid://ctg5oeujuaogk" path="res://assets/game/picatso-tail.webp" id="6_tail_tex"]
+[ext_resource type="PackedScene" path="res://scenes/effects/player_death_particles.tscn" id="7_death_fx"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0d4hy"]
 size = Vector2(28, 60)

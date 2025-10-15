@@ -1,0 +1,28 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/effects/player_death_particles.gd" id="1_death_particles"]
+[ext_resource type="Texture2D" path="res://assets/game/death-particle.webp" id="2_death_particle_tex"]
+
+[sub_resource type="Gradient" id="Gradient_Death_Fade"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.3, 0.6, 1, 1, 0.3, 0.6, 1, 1, 0.3, 0.6, 1, 0)
+
+[node name="PlayerDeathParticles" type="CPUParticles2D"]
+one_shot = true
+amount = 48
+lifetime = 1.5
+preprocess = 0.05
+explosiveness = 1.0
+spread = 180.0
+direction = Vector2(0, -1)
+gravity = Vector2(0, 220)
+initial_velocity_min = 240.0
+initial_velocity_max = 320.0
+angular_velocity_min = -3.0
+angular_velocity_max = 3.0
+scale_min = 2.4
+scale_max = 4.2
+color = Color(0.3, 0.6, 1.0, 1)
+color_ramp = SubResource("Gradient_Death_Fade")
+texture = ExtResource("2_death_particle_tex")
+script = ExtResource("1_death_particles")

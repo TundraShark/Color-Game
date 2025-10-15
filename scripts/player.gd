@@ -1,5 +1,7 @@
 extends CharacterBody2D
 
+signal player_died(reason: String)
+
 const MAX_SPEED := 240.0
 const ACCELERATION := 1200.0
 const AIR_ACCELERATION := 600.0
@@ -23,13 +25,17 @@ const BOUNCY_LAYER_MASK := 32
 const BOUNCE_CHAIN_DECAY := 0.9
 const BOUNCE_CHAIN_MIN_MULT := 0.75
 const CONVEYOR_LAYER_MASK := 64
+
 const CAT_MEOW_PATH := "res://assets/sfx/cat-meow.wav"
+const CAT_DIE_PATH := "res://assets/sfx/cat-die.wav"
 const CAT_PURR_PATHS := [
     "res://assets/sfx/cat-purr-1.wav",
     "res://assets/sfx/cat-purr-2.wav",
     "res://assets/sfx/cat-purr-3.wav"
 ]
 const CAT_PITCH_VARIATIONS: Array[float] = [0.12, 0.08, 0.04, 0.0, -0.04, -0.08, -0.12]
+const PLAYER_DEATH_PARTICLES_SCENE := preload("res://scenes/effects/player_death_particles.tscn")
+const DEATH_RESTART_DELAY := 2.0
 @export var conveyor_push_speed := 220.0
 @export var conveyor_accel := 900.0
 @export var climb_speed := 210.0
@@ -91,6 +97,7 @@ var _collision_base_bottom := 0.0
 var _meow_sfx: AudioStreamPlayer
 var _purr_sfx: AudioStreamPlayer
 var _purr_streams: Array[AudioStream] = []
+var _death_sfx: AudioStreamPlayer
 var _rng := RandomNumberGenerator.new()
 var _bullet_time_active := false
 var _bullet_time_prev_scale := 1.0
@@ -99,11 +106,14 @@ var _slope_slide_direction := Vector2.ZERO
 var _slope_slide_retained_velocity := Vector2.ZERO
 var _slope_slide_max_limit := SLOPE_SLIDE_MAX_SPEED
 var _floor_snap_timer := 0.0
+var _death_timer: SceneTreeTimer
+var _is_dead: bool = false
 
 func _ready() -> void:
     _ensure_input_actions()
     gravity = float(ProjectSettings.get_setting("physics/2d/default_gravity"))
     z_index = 50
+    add_to_group("player")
     _rope_query_shape.radius = CLIMB_DETECTION_RADIUS
     _rng.randomize()
     _bullet_time_prev_scale = Engine.time_scale
@@ -148,6 +158,18 @@ func _ready() -> void:
             if meow_stream:
                 _meow_sfx.stream = meow_stream
         _meow_sfx.bus = "SFX"
+    _death_sfx = get_node_or_null("DeathSFX")
+    if _death_sfx == null:
+        _death_sfx = AudioStreamPlayer.new()
+        _death_sfx.name = "DeathSFX"
+        _death_sfx.bus = "SFX"
+        add_child(_death_sfx)
+        if Engine.is_editor_hint() and owner:
+            _death_sfx.owner = owner
+    if _death_sfx.stream == null:
+        var death_stream: AudioStream = load(CAT_DIE_PATH)
+        if death_stream:
+            _death_sfx.stream = death_stream
     _purr_sfx = get_node_or_null("PurrSFX")
     if _purr_sfx:
         _load_purr_streams()
@@ -485,6 +507,65 @@ func _play_meow() -> void:
         _meow_sfx.stop()
     _meow_sfx.play()
 
+func kill_player(reason: String = "") -> void:
+    if _is_dead:
+        return
+    _is_dead = true
+    _play_death_sound()
+    _spawn_death_particles()
+    _despawn_player()
+    player_died.emit(reason)
+    if _death_timer and is_instance_valid(_death_timer):
+        if _death_timer.is_connected("timeout", Callable(self, "_reload_level_after_death")):
+            _death_timer.disconnect("timeout", Callable(self, "_reload_level_after_death"))
+        _death_timer = null
+    _death_timer = get_tree().create_timer(DEATH_RESTART_DELAY)
+    _death_timer.timeout.connect(_reload_level_after_death)
+
+func _reload_level_after_death() -> void:
+    _is_dead = false
+    _death_timer = null
+    var tree := get_tree()
+    if tree:
+        tree.reload_current_scene()
+
+func _despawn_player() -> void:
+    visible = false
+    set_process(false)
+    set_physics_process(false)
+    velocity = Vector2.ZERO
+    collision_layer = 0
+    collision_mask = 0
+    if _collision_shape:
+        _collision_shape.set_deferred("disabled", true)
+    if _foot_area:
+        _foot_area.monitoring = false
+
+func _spawn_death_particles() -> void:
+    if PLAYER_DEATH_PARTICLES_SCENE == null:
+        return
+    var particles = PLAYER_DEATH_PARTICLES_SCENE.instantiate()
+    if particles == null:
+        return
+    if particles is Node2D:
+        var particles_2d := particles as Node2D
+        particles_2d.set_as_top_level(true)
+        if particles_2d is CPUParticles2D:
+            var cpu_particles := particles_2d as CPUParticles2D
+            cpu_particles.emitting = false
+            cpu_particles.restart()
+        particles_2d.global_position = global_position
+        particles_2d.rotation = rotation
+        particles_2d.z_index = z_index + 1
+        if particles_2d is CPUParticles2D:
+            var cpu_particles_after := particles_2d as CPUParticles2D
+            cpu_particles_after.emitting = true
+    var target_parent := get_parent()
+    if target_parent == null:
+        target_parent = get_tree().current_scene
+    if target_parent:
+        target_parent.add_child(particles)
+
 func _play_purr() -> void:
     if _purr_sfx == null:
         return
@@ -492,15 +573,23 @@ func _play_purr() -> void:
         _load_purr_streams()
     if _purr_streams.is_empty():
         return
-    var stream_index := _rng.randi_range(0, _purr_streams.size() - 1)
-    var stream := _purr_streams[stream_index]
+    var index := _rng.randi_range(0, _purr_streams.size() - 1)
+    var stream := _purr_streams[index]
     if stream == null:
         return
-    _purr_sfx.stream = stream
+    if _purr_sfx.stream != stream:
+        _purr_sfx.stream = stream
     _apply_random_pitch(_purr_sfx)
     if _purr_sfx.playing:
         _purr_sfx.stop()
     _purr_sfx.play()
+
+func _play_death_sound() -> void:
+    if _death_sfx == null or _death_sfx.stream == null:
+        return
+    if _death_sfx.playing:
+        _death_sfx.stop()
+    _death_sfx.play()
 
 func _apply_random_pitch(player: AudioStreamPlayer) -> void:
     if player == null:
@@ -768,20 +857,9 @@ func _update_rope_state() -> void:
     params.collide_with_areas = true
     params.collide_with_bodies = false  # Multi-segment rope uses Area2D, not RigidBody2D
 
-    if Engine.get_frames_drawn() % 30 == 0:
-        print("Rope debug: Querying at position: ", global_position + CLIMB_DETECTION_OFFSET)
-        print("Rope debug: Using collision mask: ", ROPE_LAYER_MASK)
-
     var results := space.intersect_shape(params, 8)
     _rope_contacts = results.size()
     _on_rope = _rope_contacts > 0
-
-    if Engine.get_frames_drawn() % 30 == 0:
-        print("Rope debug: Found ", _rope_contacts, " rope contacts")
-        if _rope_contacts > 0:
-            print("Rope debug: Player ON ROPE at position: ", global_position)
-        else:
-            print("Rope debug: Player OFF ROPE")
 
 func _update_vine_state() -> void:
     var world := get_world_2d()
@@ -802,20 +880,9 @@ func _update_vine_state() -> void:
     params.collide_with_areas = true
     params.collide_with_bodies = false
 
-    if Engine.get_frames_drawn() % 30 == 0:
-        print("Vine debug: Querying at position: ", global_position + CLIMB_DETECTION_OFFSET)
-        print("Vine debug: Using collision mask: ", 128)
-
     var results := space.intersect_shape(params, 8)
     _vine_contacts = results.size()
     _on_vine = _vine_contacts > 0
-
-    if Engine.get_frames_drawn() % 30 == 0:
-        print("Vine debug: Found ", _vine_contacts, " vine contacts")
-        if _vine_contacts > 0:
-            print("Vine debug: Player ON VINE at position: ", global_position)
-        else:
-            print("Vine debug: Player NOT on vine")
 
 func _update_camera_offset(delta: float) -> void:
     if _camera == null:

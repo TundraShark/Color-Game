@@ -72,16 +72,6 @@ position = Vector2(-4758.1, -2927.51)
 scale = Vector2(0.200193, 2.86607)
 texture = SubResource("GradientTexture2D_x42e6")
 
-[node name="Sprite2D12" type="Sprite2D" parent="."]
-position = Vector2(-3368.33, -3149.84)
-scale = Vector2(1.81053, 1.82251)
-texture = SubResource("GradientTexture2D_x42e6")
-
-[node name="Sprite2D11" type="Sprite2D" parent="."]
-position = Vector2(-3721.43, -3574.68)
-scale = Vector2(2.91398, 2.10914)
-texture = SubResource("GradientTexture2D_x42e6")
-
 [node name="Sprite2D10" type="Sprite2D" parent="."]
 position = Vector2(-4356.31, -3149.24)
 scale = Vector2(-0.932182, 1.86594)
@@ -134,7 +124,6 @@ scale = Vector2(0.997059, 1)
 polygon = PackedVector2Array(1281.41, 622.763, 2164.76, 1218.41, 2123.96, 1278.5, 1240.88, 683.1)
 
 [node name="CollisionPolygon2D6" type="CollisionPolygon2D" parent="Wall2"]
-visible = false
 position = Vector2(-12093.3, 261.337)
 rotation = -0.594441
 scale = Vector2(0.997059, 1)
@@ -145,24 +134,6 @@ position = Vector2(-14443.5, 997.034)
 rotation = -0.594441
 scale = Vector2(0.997059, 1)
 polygon = PackedVector2Array(1642.94, 892.077, 1721.99, 945.344, 1673.97, 1016.05, 1595.13, 962.596)
-
-[node name="CollisionPolygon2D7" type="CollisionPolygon2D" parent="Wall2"]
-position = Vector2(-12203.6, -714.478)
-rotation = -0.594441
-scale = Vector2(0.997059, 1)
-polygon = PackedVector2Array(1281.41, 622.763, 4802.41, 2997.11, 4716.94, 3123, 1195.9, 749.826)
-
-[node name="CollisionPolygon2D8" type="CollisionPolygon2D" parent="Wall2"]
-position = Vector2(-10598.4, 261.755)
-rotation = -0.594441
-scale = Vector2(0.997059, 1)
-polygon = PackedVector2Array(1281.41, 622.763, 3469.35, 2099.17, 3394.06, 2205.66, 1207.93, 732.545)
-
-[node name="CollisionPolygon2D9" type="CollisionPolygon2D" parent="Wall2"]
-position = Vector2(-13478.3, 255.91)
-rotation = -0.594441
-scale = Vector2(0.997059, 1)
-polygon = PackedVector2Array(2336.29, 1340.57, 3469.35, 2099.17, 3387.11, 2211.27, 2260.55, 1452.47)
 
 [node name="Wall" type="StaticBody2D" parent="."]
 visible = false
@@ -216,91 +187,5 @@ segment_count = 6
 position = Vector2(-4204.62, -3132.16)
 segment_count = 11
 
-[node name="MultiSegmentRope6" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-4537, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope7" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-4465.2, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope8" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-4402.25, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope9" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-4300.54, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope10" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-4236.2, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope11" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-4150.25, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope12" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-4084.63, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope13" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-3995.84, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope14" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-3910.61, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope15" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-3838.21, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope16" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-3746.24, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope17" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-3658.97, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope18" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-3561.49, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope19" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-3464.97, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope20" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-3380.47, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope21" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-3272.65, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope22" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-3164.11, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope23" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-3063.91, -3552.66)
-segment_count = 14
-
-[node name="MultiSegmentRope24" parent="." instance=ExtResource("10_multi_rope")]
-position = Vector2(-2973.61, -3552.66)
-segment_count = 14
-
 [node name="SpikeTrap" parent="." instance=ExtResource("3_sk5k4")]
-position = Vector2(-4931.02, -3104.5)
-spike_count = 2
-
-[node name="TeethBody" type="Area2D" parent="SpikeTrap"]
-collision_layer = 4
-
-[node name="TeethCollision1" type="CollisionPolygon2D" parent="SpikeTrap/TeethBody"]
-polygon = PackedVector2Array(-48, 0, -24, -24, 0, 0)
-
-[node name="TeethCollision2" type="CollisionPolygon2D" parent="SpikeTrap/TeethBody"]
-polygon = PackedVector2Array(0, 0, 24, -24, 48, 0)
+position = Vector2(-4985.23, -3104.5)
