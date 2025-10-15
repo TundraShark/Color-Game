@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://bclekkmobvy17"]
+[gd_scene load_steps=8 format=3 uid="uid://bclekkmobvy17"]
 
 [ext_resource type="Texture2D" uid="uid://j5h4pn7wnpbo" path="res://assets/levels/level_1.png" id="1_6iamk"]
 [ext_resource type="PackedScene" uid="uid://df8t8w2wkr3sf" path="res://scenes/player.tscn" id="1_ksju7"]
 [ext_resource type="PackedScene" uid="uid://duv1mhb7so2cb" path="res://scenes/lights/soft_orange_light.tscn" id="3_nsrm0"]
 [ext_resource type="PackedScene" path="res://scenes/objects/pushable_crate.tscn" id="3_x42e6"]
+[ext_resource type="PackedScene" uid="uid://0rhxgm3x5idk" path="res://scenes/objects/multi_segment_rope.tscn" id="10_multi_rope"]
 
 [sub_resource type="Gradient" id="Gradient_2befy"]
 colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
@@ -71,8 +72,8 @@ scale = Vector2(0.200193, 2.86607)
 texture = SubResource("GradientTexture2D_x42e6")
 
 [node name="Sprite2D10" type="Sprite2D" parent="."]
-position = Vector2(-4331.72, -3149.24)
-scale = Vector2(-0.855345, 1.86594)
+position = Vector2(-4356.31, -3149.24)
+scale = Vector2(-0.932182, 1.86594)
 texture = SubResource("GradientTexture2D_x42e6")
 
 [node name="Sprite2D5" type="Sprite2D" parent="."]
@@ -125,7 +126,7 @@ polygon = PackedVector2Array(1281.41, 622.763, 2164.76, 1218.41, 2123.96, 1278.5
 position = Vector2(-12093.3, 261.337)
 rotation = -0.594441
 scale = Vector2(0.997059, 1)
-polygon = PackedVector2Array(1281.41, 622.763, 2315.5, 1319.6, 2239.34, 1431.38, 1205.36, 735.109)
+polygon = PackedVector2Array(1188.33, 561.223, 2315.5, 1319.6, 2239.34, 1431.38, 1111.2, 671.777)
 
 [node name="CollisionPolygon2D5" type="CollisionPolygon2D" parent="Wall2"]
 position = Vector2(-14443.5, 997.034)
@@ -157,10 +158,30 @@ position = Vector2(-4746.71, -3047.78)
 scale = Vector2(1.59998, 1.59998)
 
 [node name="PushableCrate4" parent="." instance=ExtResource("3_x42e6")]
-position = Vector2(-4282.07, -2978.81)
+position = Vector2(-4782.82, -3096.6)
 
 [node name="PushableCrate" parent="." instance=ExtResource("3_x42e6")]
 position = Vector2(-5536.56, -3249.83)
 
 [node name="PushableCrate2" parent="." instance=ExtResource("3_x42e6")]
 position = Vector2(-5311.08, -3269.15)
+
+[node name="MultiSegmentRope" parent="." instance=ExtResource("10_multi_rope")]
+position = Vector2(-4373.44, -3132.16)
+segment_count = 9
+
+[node name="MultiSegmentRope2" parent="." instance=ExtResource("10_multi_rope")]
+position = Vector2(-4331.82, -3132.16)
+segment_count = 3
+
+[node name="MultiSegmentRope3" parent="." instance=ExtResource("10_multi_rope")]
+position = Vector2(-4287.44, -3133.16)
+segment_count = 13
+
+[node name="MultiSegmentRope4" parent="." instance=ExtResource("10_multi_rope")]
+position = Vector2(-4244.74, -3132.16)
+segment_count = 6
+
+[node name="MultiSegmentRope5" parent="." instance=ExtResource("10_multi_rope")]
+position = Vector2(-4204.62, -3132.16)
+segment_count = 11

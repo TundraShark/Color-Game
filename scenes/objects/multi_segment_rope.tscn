@@ -1,0 +1,106 @@
+[gd_scene load_steps=4 format=3 uid="uid://0rhxgm3x5idk"]
+
+[ext_resource type="Script" uid="uid://bhecsx86vso4q" path="res://scripts/objects/multi_segment_rope.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://d4gft7mjx7yly" path="res://assets/game/paint-orange.png" id="2_texture"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_segment"]
+size = Vector2(8, 25)
+
+[node name="MultiSegmentRope" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Segment1" type="Area2D" parent="."]
+position = Vector2(0, 25)
+collision_layer = 256
+
+[node name="Sprite2D" type="Sprite2D" parent="Segment1"]
+self_modulate = Color(0.55, 0.27, 0.07, 1)
+scale = Vector2(0.4, 6.75999)
+texture = ExtResource("2_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Segment1"]
+shape = SubResource("RectangleShape2D_segment")
+
+[node name="Segment2" type="Area2D" parent="."]
+position = Vector2(0, 50)
+collision_layer = 256
+
+[node name="Sprite2D" type="Sprite2D" parent="Segment2"]
+self_modulate = Color(0.55, 0.27, 0.07, 1)
+scale = Vector2(0.4, 6.75999)
+texture = ExtResource("2_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Segment2"]
+shape = SubResource("RectangleShape2D_segment")
+
+[node name="Segment3" type="Area2D" parent="."]
+position = Vector2(0, 75)
+collision_layer = 256
+
+[node name="Sprite2D" type="Sprite2D" parent="Segment3"]
+self_modulate = Color(0.55, 0.27, 0.07, 1)
+scale = Vector2(0.4, 6.76)
+texture = ExtResource("2_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Segment3"]
+shape = SubResource("RectangleShape2D_segment")
+
+[node name="Segment4" type="Area2D" parent="."]
+position = Vector2(0, 100)
+collision_layer = 256
+
+[node name="Sprite2D" type="Sprite2D" parent="Segment4"]
+self_modulate = Color(0.55, 0.27, 0.07, 1)
+scale = Vector2(0.4, 6.75999)
+texture = ExtResource("2_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Segment4"]
+shape = SubResource("RectangleShape2D_segment")
+
+[node name="Segment5" type="Area2D" parent="."]
+position = Vector2(0, 125)
+collision_layer = 256
+
+[node name="Sprite2D" type="Sprite2D" parent="Segment5"]
+self_modulate = Color(0.55, 0.27, 0.07, 1)
+scale = Vector2(0.4, 6.75999)
+texture = ExtResource("2_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Segment5"]
+shape = SubResource("RectangleShape2D_segment")
+
+[node name="Segment6" type="Area2D" parent="."]
+position = Vector2(0, 150)
+collision_layer = 256
+
+[node name="Sprite2D" type="Sprite2D" parent="Segment6"]
+self_modulate = Color(0.55, 0.27, 0.07, 1)
+scale = Vector2(0.4, 6.75999)
+texture = ExtResource("2_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Segment6"]
+shape = SubResource("RectangleShape2D_segment")
+
+[node name="Segment7" type="Area2D" parent="."]
+position = Vector2(0, 175)
+collision_layer = 256
+
+[node name="Sprite2D" type="Sprite2D" parent="Segment7"]
+self_modulate = Color(0.55, 0.27, 0.07, 1)
+scale = Vector2(0.4, 6.75999)
+texture = ExtResource("2_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Segment7"]
+shape = SubResource("RectangleShape2D_segment")
+
+[node name="Segment8" type="Area2D" parent="."]
+position = Vector2(0, 200)
+collision_layer = 256
+
+[node name="Sprite2D" type="Sprite2D" parent="Segment8"]
+self_modulate = Color(0.55, 0.27, 0.07, 1)
+scale = Vector2(0.4, 6.75999)
+texture = ExtResource("2_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Segment8"]
+shape = SubResource("RectangleShape2D_segment")

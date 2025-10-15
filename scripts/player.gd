@@ -9,20 +9,20 @@ const SLIPPERY_FRICTION := 200.0
 const SLIPPERY_ACCEL_MULT := 4.0
 const SLIPPERY_SPEED_MULT := 2.3
 const FOOT_SAMPLE_OFFSETS := [Vector2(0, 22), Vector2(-10, 20), Vector2(10, 20)]
-const BOUNCY_LAYER_MASK := 32
-const CONVEYOR_LAYER_MASK := 64
-const VINE_LAYER_MASK := 128
-const BOUNCY_DEFAULT_STRENGTH := 900.0
-const AIR_FRICTION := 200.0
+const ROPE_LAYER_MASK := 256
 const SLOPE_DETECTION_NORMAL_Y := 0.995
 const SLOPE_MIN_NORMAL_X := 0.08
 const SLOPE_SLIDE_ACCEL := 650.0
 const SLOPE_SLIDE_MAX_SPEED := 520.0
 const SLOPE_STEEP_ACCEL_MULT := 2.2
 const SLOPE_STEEP_MAX_MULT := 1.75
+const PUSH_FORCE := 320.0
+const AIR_FRICTION := 200.0
+const BOUNCY_DEFAULT_STRENGTH := 900.0
+const BOUNCY_LAYER_MASK := 32
 const BOUNCE_CHAIN_DECAY := 0.9
 const BOUNCE_CHAIN_MIN_MULT := 0.75
-const PUSH_FORCE := 320.0
+const CONVEYOR_LAYER_MASK := 64
 const CAT_MEOW_PATH := "res://assets/sfx/cat-meow.wav"
 const CAT_PURR_PATHS := [
     "res://assets/sfx/cat-purr-1.wav",
@@ -63,9 +63,11 @@ var _bounce_chain_multiplier := 1.0
 var _conveyor_contacts := 0
 var _conveyor_direction_sum := 0.0
 var _on_conveyor := false
+var _rope_contacts := 0
+var _on_rope := false
 var _vine_contacts := 0
 var _on_vine := false
-var _vine_query_shape := CircleShape2D.new()
+var _rope_query_shape := CircleShape2D.new()
 var _camera: Camera2D
 var _last_fall_speed: float = 0.0
 var _bounce_bonus_available := true
@@ -102,7 +104,7 @@ func _ready() -> void:
     _ensure_input_actions()
     gravity = float(ProjectSettings.get_setting("physics/2d/default_gravity"))
     z_index = 50
-    _vine_query_shape.radius = CLIMB_DETECTION_RADIUS
+    _rope_query_shape.radius = CLIMB_DETECTION_RADIUS
     _rng.randomize()
     _bullet_time_prev_scale = Engine.time_scale
     _camera = get_node_or_null("Camera2D")
@@ -155,7 +157,7 @@ func _ready() -> void:
         _foot_area.monitoring = true
         _foot_area.monitorable = false
         _foot_area.collision_layer = 0
-        _foot_area.collision_mask = 16 | BOUNCY_LAYER_MASK | CONVEYOR_LAYER_MASK | VINE_LAYER_MASK
+        _foot_area.collision_mask = 16 | BOUNCY_LAYER_MASK | CONVEYOR_LAYER_MASK | ROPE_LAYER_MASK | 128
         _foot_area.body_entered.connect(_on_foot_body_entered)
         _foot_area.body_exited.connect(_on_foot_body_exited)
         _foot_area.area_entered.connect(_on_foot_area_entered)
@@ -177,7 +179,7 @@ func _physics_process(delta: float) -> void:
 
     _update_bullet_time_state()
 
-    var wants_crouch := Input.is_action_pressed("crouch") and is_on_floor() and not _on_vine
+    var wants_crouch := Input.is_action_pressed("crouch") and is_on_floor() and not _on_rope and not _on_vine
     if _is_crouching and not is_on_floor():
         wants_crouch = false
     if wants_crouch != _is_crouching:
@@ -206,6 +208,7 @@ func _physics_process(delta: float) -> void:
 
     _update_slippery_state()
     _update_conveyor_state()
+    _update_rope_state()
     _update_vine_state()
     _scan_for_bouncy_surfaces(current_velocity)
 
@@ -228,7 +231,7 @@ func _physics_process(delta: float) -> void:
 
     var max_speed := MAX_SPEED + _slippery_speed_bonus
     var target_speed := direction * max_speed
-    var conveyor_active := _on_conveyor and is_on_floor() and not _on_vine
+    var conveyor_active := _on_conveyor and is_on_floor() and not _on_rope and not _on_vine
     var conveyor_target := 0.0
     if conveyor_active and _conveyor_contacts > 0:
         var direction_factor: float = clamp(_conveyor_direction_sum / float(max(_conveyor_contacts, 1)), -1.0, 1.0)
@@ -241,17 +244,15 @@ func _physics_process(delta: float) -> void:
         _slope_slide_retained_velocity = slide_velocity
     elif direction != 0.0:
         var accel := ACCELERATION if is_on_floor() else AIR_ACCELERATION
-        if _on_vine:
+        if _on_rope or _on_vine:
             accel = climb_accel
-        elif is_on_floor() and _on_slippery_paint:
-            accel *= SLIPPERY_ACCEL_MULT
         current_velocity.x = move_toward(current_velocity.x, target_speed, accel * delta)
     elif conveyor_active:
         current_velocity.x = move_toward(current_velocity.x, conveyor_target, conveyor_accel * delta)
     else:
         var applying_ground_friction := not (on_slope and _is_crouching)
-        var base_friction := FRICTION if (is_on_floor() or _on_vine) else AIR_FRICTION
-        if _on_vine:
+        var base_friction := FRICTION if (is_on_floor() or _on_rope or _on_vine) else AIR_FRICTION
+        if _on_rope or _on_vine:
             base_friction = climb_accel
         elif is_on_floor() and _on_slippery_paint:
             base_friction = SLIPPERY_FRICTION
@@ -275,13 +276,16 @@ func _physics_process(delta: float) -> void:
 
     var climb_input := Input.get_axis("climb_up", "climb_down")
 
-    if _on_vine:
+    if _on_rope or _on_vine:
         if Input.is_action_just_pressed("jump"):
+            _on_rope = false
             _on_vine = false
             current_velocity.y = JUMP_SPEED
         else:
             var target_climb := climb_input * climb_speed
-            current_velocity.y = move_toward(current_velocity.y, target_climb, climb_accel * delta)
+            # For consistent climbing, immediately set vertical velocity to target
+            # This prevents jumping when grabbing from high speeds
+            current_velocity.y = target_climb
     elif Input.is_action_just_pressed("jump") and is_on_floor():
         current_velocity.y = JUMP_SPEED
         if _is_crouching:
@@ -596,11 +600,15 @@ func _on_foot_area_entered(area: Area2D) -> void:
         _on_slippery_paint = true
     elif area.is_in_group("bouncy_paint"):
         _handle_bouncy_contact(area)
+    elif area.get_meta("is_vine", false):
+        # Don't increment slippery contacts for vines
+        pass
 
 func _on_foot_area_exited(area: Area2D) -> void:
     if area.is_in_group("slippery_paint"):
         _slippery_contacts = max(_slippery_contacts - 1, 0)
         _on_slippery_paint = _slippery_contacts > 0
+    # Don't decrement slippery contacts for vines since we don't increment them
 
 func _update_slippery_state() -> void:
     if not is_on_floor():
@@ -741,6 +749,40 @@ func _update_conveyor_state() -> void:
     if not _on_conveyor:
         _conveyor_direction_sum = 0.0
 
+func _update_rope_state() -> void:
+    var world := get_world_2d()
+    if world == null:
+        _rope_contacts = 0
+        _on_rope = false
+        return
+    var space := world.direct_space_state
+    if space == null:
+        _rope_contacts = 0
+        _on_rope = false
+        return
+
+    var params := PhysicsShapeQueryParameters2D.new()
+    params.shape = _rope_query_shape
+    params.transform = Transform2D(0.0, global_position + CLIMB_DETECTION_OFFSET)
+    params.collision_mask = ROPE_LAYER_MASK
+    params.collide_with_areas = true
+    params.collide_with_bodies = false  # Multi-segment rope uses Area2D, not RigidBody2D
+
+    if Engine.get_frames_drawn() % 30 == 0:
+        print("Rope debug: Querying at position: ", global_position + CLIMB_DETECTION_OFFSET)
+        print("Rope debug: Using collision mask: ", ROPE_LAYER_MASK)
+
+    var results := space.intersect_shape(params, 8)
+    _rope_contacts = results.size()
+    _on_rope = _rope_contacts > 0
+
+    if Engine.get_frames_drawn() % 30 == 0:
+        print("Rope debug: Found ", _rope_contacts, " rope contacts")
+        if _rope_contacts > 0:
+            print("Rope debug: Player ON ROPE at position: ", global_position)
+        else:
+            print("Rope debug: Player OFF ROPE")
+
 func _update_vine_state() -> void:
     var world := get_world_2d()
     if world == null:
@@ -754,15 +796,26 @@ func _update_vine_state() -> void:
         return
 
     var params := PhysicsShapeQueryParameters2D.new()
-    params.shape = _vine_query_shape
+    params.shape = _rope_query_shape
     params.transform = Transform2D(0.0, global_position + CLIMB_DETECTION_OFFSET)
-    params.collision_mask = VINE_LAYER_MASK
+    params.collision_mask = 128  # VINE_LAYER
     params.collide_with_areas = true
     params.collide_with_bodies = false
+
+    if Engine.get_frames_drawn() % 30 == 0:
+        print("Vine debug: Querying at position: ", global_position + CLIMB_DETECTION_OFFSET)
+        print("Vine debug: Using collision mask: ", 128)
 
     var results := space.intersect_shape(params, 8)
     _vine_contacts = results.size()
     _on_vine = _vine_contacts > 0
+
+    if Engine.get_frames_drawn() % 30 == 0:
+        print("Vine debug: Found ", _vine_contacts, " vine contacts")
+        if _vine_contacts > 0:
+            print("Vine debug: Player ON VINE at position: ", global_position)
+        else:
+            print("Vine debug: Player NOT on vine")
 
 func _update_camera_offset(delta: float) -> void:
     if _camera == null:

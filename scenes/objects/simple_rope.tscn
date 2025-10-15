@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=3 uid="uid://b8c5f7fad2a1"]
+
+[ext_resource type="Script" uid="uid://dvvbkok7p53gj" path="res://scripts/objects/simple_rope.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://d4gft7mjx7yly" path="res://assets/game/paint-orange.png" id="2_texture"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rope"]
+size = Vector2(6, 200)
+
+[node name="SimpleRope" type="StaticBody2D"]
+collision_layer = 8
+collision_mask = 0
+script = ExtResource("1_script")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+self_modulate = Color(0.55, 0.27, 0.07, 1)
+position = Vector2(0, -0.00493133)
+scale = Vector2(0.5, 49.989)
+texture = ExtResource("2_texture")
+
+[node name="Area2D" type="Area2D" parent="."]
+collision_layer = 256
+collision_mask = 4
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("RectangleShape2D_rope")

@@ -25,6 +25,8 @@ func _ready() -> void:
     _rng.randomize()
     _sprite = get_node_or_null("Sprite2D")
     _apply_color_to_sprite()
+    if not is_in_group("paint_projectile"):
+        add_to_group("paint_projectile")
 
 func set_color(new_color: Color, color_name: String = "") -> void:
     paint_color = new_color
@@ -278,7 +280,7 @@ func _create_vine_area(parent: Node, point: Vector2, orientation_value: int) -> 
     area.monitoring = true
     area.monitorable = true
     area.collision_layer = VINE_LAYER
-    area.collision_mask = 1
+    area.collision_mask = 4
     if not area.is_in_group("vine_paint"):
         area.add_to_group("vine_paint")
     area.set_meta("is_vine", true)

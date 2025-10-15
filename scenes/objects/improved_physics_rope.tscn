@@ -1,0 +1,62 @@
+[gd_scene load_steps=5 format=3 uid="uid://mtpv8um0qvwj"]
+
+[ext_resource type="Script" path="res://scripts/objects/improved_physics_rope.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://d4gft7mjx7yly" path="res://assets/game/paint-orange.png" id="2_texture"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_anchor"]
+size = Vector2(10, 10)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_segment"]
+size = Vector2(8, 25)
+
+[node name="ImprovedPhysicsRope" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Anchor" type="StaticBody2D" parent="."]
+collision_layer = 8
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Anchor"]
+shape = SubResource("RectangleShape2D_anchor")
+
+[node name="DampedSpringJoint2D" type="DampedSpringJoint2D" parent="Anchor"]
+node_a = NodePath("../Anchor")
+node_b = NodePath("../Segment1")
+length = 25.0
+rest_length = 25.0
+damping = 2.0
+
+[node name="Segment1" type="RigidBody2D" parent="."]
+position = Vector2(0, 25)
+collision_layer = 256
+collision_mask = 5
+
+[node name="Sprite2D" type="Sprite2D" parent="Segment1"]
+self_modulate = Color(0.55, 0.27, 0.07, 1)
+position = Vector2(0, -0.0315199)
+scale = Vector2(0.4, 6.21651)
+texture = ExtResource("2_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Segment1"]
+shape = SubResource("RectangleShape2D_segment")
+
+[node name="DampedSpringJoint2D" type="DampedSpringJoint2D" parent="Segment1"]
+node_a = NodePath("../Segment1")
+node_b = NodePath("../Segment2")
+length = 25.0
+rest_length = 25.0
+damping = 2.0
+
+[node name="Segment2" type="RigidBody2D" parent="."]
+position = Vector2(0, 50)
+collision_layer = 256
+collision_mask = 5
+
+[node name="Sprite2D" type="Sprite2D" parent="Segment2"]
+self_modulate = Color(0.55, 0.27, 0.07, 1)
+position = Vector2(0, -0.0155444)
+scale = Vector2(0.4, 6.27156)
+texture = ExtResource("2_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Segment2"]
+shape = SubResource("RectangleShape2D_segment")
