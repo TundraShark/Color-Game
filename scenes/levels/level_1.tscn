@@ -1,10 +1,9 @@
-[gd_scene load_steps=8 format=3 uid="uid://bclekkmobvy17"]
+[gd_scene load_steps=7 format=3 uid="uid://bclekkmobvy17"]
 
 [ext_resource type="Texture2D" uid="uid://j5h4pn7wnpbo" path="res://assets/levels/level_1.png" id="1_6iamk"]
 [ext_resource type="PackedScene" uid="uid://df8t8w2wkr3sf" path="res://scenes/player.tscn" id="1_ksju7"]
 [ext_resource type="PackedScene" uid="uid://duv1mhb7so2cb" path="res://scenes/lights/soft_orange_light.tscn" id="3_nsrm0"]
 [ext_resource type="PackedScene" path="res://scenes/objects/pushable_crate.tscn" id="3_x42e6"]
-[ext_resource type="PackedScene" path="res://scenes/objects/rope.tscn" id="5_6761a"]
 
 [sub_resource type="Gradient" id="Gradient_2befy"]
 colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
@@ -165,6 +164,3 @@ position = Vector2(-5536.56, -3249.83)
 
 [node name="PushableCrate2" parent="." instance=ExtResource("3_x42e6")]
 position = Vector2(-5311.08, -3269.15)
-
-[node name="Rope" parent="." instance=ExtResource("5_6761a")]
-position = Vector2(-4394.41, -3102.46)
