@@ -44,6 +44,9 @@ const CAT_PITCH_VARIATIONS: Array[float] = [0.12, 0.08, 0.04, 0.0, -0.04, -0.08,
 const CLIMB_DETECTION_RADIUS := 22.0
 const CLIMB_DETECTION_OFFSET := Vector2(0, -8)
 const BULLET_TIME_SCALE := 0.1
+@export var floor_snap_length_default: float = 18.0
+@export_range(0.0, 89.0, 0.5) var floor_snap_max_angle_degrees: float = 72.0
+@export var floor_snap_reenable_delay: float = 0.18
 
 var gravity: float = 980.0
 var _on_slippery_paint := false
@@ -93,6 +96,7 @@ var _slope_slide_speed := 0.0
 var _slope_slide_direction := Vector2.ZERO
 var _slope_slide_retained_velocity := Vector2.ZERO
 var _slope_slide_max_limit := SLOPE_SLIDE_MAX_SPEED
+var _floor_snap_timer := 0.0
 
 func _ready() -> void:
     _ensure_input_actions()
@@ -102,6 +106,8 @@ func _ready() -> void:
     _rng.randomize()
     _bullet_time_prev_scale = Engine.time_scale
     _camera = get_node_or_null("Camera2D")
+    floor_snap_length = floor_snap_length_default
+    floor_max_angle = deg_to_rad(floor_snap_max_angle_degrees)
     if _camera:
         _camera.make_current()
     _body_sprite = get_node_or_null("Sprite2D")
@@ -282,6 +288,8 @@ func _physics_process(delta: float) -> void:
             _exit_crouch()
             _is_crouching = false
         _play_jump_squash()
+        floor_snap_length = 0.0
+        _floor_snap_timer = floor_snap_reenable_delay
     else:
         current_velocity.y += gravity * delta
 
@@ -305,6 +313,7 @@ func _physics_process(delta: float) -> void:
         current_velocity.x = clamp(current_velocity.x, -horizontal_cap, horizontal_cap)
     self.velocity = current_velocity
     move_and_slide()
+    _apply_floor_snap(delta)
     _apply_push_to_bodies()
     _update_camera_offset(delta)
 
@@ -371,6 +380,21 @@ func _apply_push_to_bodies() -> void:
                 continue
             var contact_point := collision.get_position()
             rigid.apply_impulse(push_direction * abs(impulse_strength) * 0.1, contact_point - rigid.global_position)
+
+func _apply_floor_snap(delta: float) -> void:
+    floor_max_angle = deg_to_rad(floor_snap_max_angle_degrees)
+    if floor_snap_length_default <= 0.0:
+        floor_snap_length = 0.0
+        return
+    if _floor_snap_timer > 0.0:
+        _floor_snap_timer = max(_floor_snap_timer - delta, 0.0)
+        if _floor_snap_timer <= 0.0:
+            floor_snap_length = floor_snap_length_default
+        return
+    if floor_snap_length != floor_snap_length_default:
+        if not is_on_floor() and velocity.y < 0.0:
+            return
+        floor_snap_length = floor_snap_length_default
 
 func _update_facing_direction(move_input: float, current_velocity_x: float) -> void:
     var desired_direction := _facing_direction

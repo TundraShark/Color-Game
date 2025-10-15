@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/objects/rope_segment.gd" id="1_xoto7"]
+
+[sub_resource type="CapsuleShape2D" id="1_capsule"]
+radius = 4.0
+height = 24.0
+
+[sub_resource type="Gradient" id="1_gradient"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.33, 0.24, 0.16, 1, 0.2, 0.14, 0.1, 1)
+
+[sub_resource type="GradientTexture2D" id="1_texture"]
+gradient = SubResource("1_gradient")
+width = 16
+height = 64
+fill = 2
+
+[node name="RopeSegment" type="RigidBody2D"]
+collision_layer = 4
+collision_mask = 5
+gravity_scale = 1.0
+script = ExtResource("1_xoto7")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1_capsule")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = SubResource("1_texture")
+scale = Vector2(0.25, 0.4)
+centered = true

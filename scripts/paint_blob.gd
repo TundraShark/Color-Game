@@ -50,6 +50,7 @@ func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
     _decals_spawned = true
 
     var contact_point := state.get_contact_collider_position(0)
+    var contact_collider := state.get_contact_collider_object(0)
     var averaged_normal := Vector2.ZERO
     for i in range(contact_count):
         var local_normal := state.get_contact_local_normal(i)
@@ -60,10 +61,10 @@ func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
         averaged_normal = global_transform.basis_xform(averaged_normal)
     var contact_normal := averaged_normal.normalized()
 
-    _spawn_decals(contact_point, contact_normal, velocity)
+    _spawn_decals(contact_point, contact_normal, velocity, contact_collider)
     call_deferred("queue_free")
 
-func _spawn_decals(point: Vector2, normal: Vector2, impact_velocity: Vector2) -> void:
+func _spawn_decals(point: Vector2, normal: Vector2, impact_velocity: Vector2, collider: Object = null) -> void:
     var safe_normal := normal
     if safe_normal == Vector2.ZERO:
         safe_normal = Vector2.UP
@@ -87,6 +88,9 @@ func _spawn_decals(point: Vector2, normal: Vector2, impact_velocity: Vector2) ->
     var tangent := Vector2(-safe_normal.y, safe_normal.x).normalized()
     var base_rotation := safe_normal.angle() + deg_to_rad(90.0)
     var parent_node: Node = get_tree().current_scene
+    var decal_parent := _find_decal_parent(collider)
+    if decal_parent:
+        parent_node = decal_parent
 
     for i in range(DECAL_COUNT):
         var decal_instance := decal_scene.instantiate()
@@ -99,6 +103,17 @@ func _spawn_decals(point: Vector2, normal: Vector2, impact_velocity: Vector2) ->
         if decal_instance.has_method("configure"):
             decal_instance.configure(_rng, safe_normal, paint_color, paint_color_name, impact_velocity)
         parent_node.add_child(decal_instance)
+
+func _find_decal_parent(collider: Object) -> Node:
+    if collider is Node:
+        var node := collider as Node
+        if node.is_inside_tree():
+            var current := node
+            while current:
+                if current.is_in_group("paint_decal_parent"):
+                    return current
+                current = current.get_parent()
+    return null
 
 func _clear_paint_decals(point: Vector2) -> void:
     var tree := get_tree()

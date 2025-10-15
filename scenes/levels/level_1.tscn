@@ -1,9 +1,19 @@
-[gd_scene load_steps=5 format=3 uid="uid://bclekkmobvy17"]
+[gd_scene load_steps=8 format=3 uid="uid://bclekkmobvy17"]
 
 [ext_resource type="Texture2D" uid="uid://j5h4pn7wnpbo" path="res://assets/levels/level_1.png" id="1_6iamk"]
 [ext_resource type="PackedScene" uid="uid://df8t8w2wkr3sf" path="res://scenes/player.tscn" id="1_ksju7"]
 [ext_resource type="PackedScene" uid="uid://duv1mhb7so2cb" path="res://scenes/lights/soft_orange_light.tscn" id="3_nsrm0"]
 [ext_resource type="PackedScene" path="res://scenes/objects/pushable_crate.tscn" id="3_x42e6"]
+[ext_resource type="PackedScene" path="res://scenes/objects/rope.tscn" id="5_6761a"]
+
+[sub_resource type="Gradient" id="Gradient_2befy"]
+colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_x42e6"]
+gradient = SubResource("Gradient_2befy")
+width = 640
+height = 32
+fill = 2
 
 [node name="Level1" type="Node2D"]
 
@@ -25,13 +35,107 @@ scale = Vector2(0.44, 0.44)
 texture = ExtResource("1_6iamk")
 
 [node name="Player" parent="." instance=ExtResource("1_ksju7")]
-position = Vector2(-3319.46, -2653.57)
+position = Vector2(-4665.85, -2917.2)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 visible = false
 position = Vector2(-971.692, -4285.96)
 
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(-4810.81, -2868.92)
+scale = Vector2(0.731032, 1)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D6" type="Sprite2D" parent="."]
+position = Vector2(-5386.57, -3163)
+scale = Vector2(0.731032, 1)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D7" type="Sprite2D" parent="."]
+position = Vector2(-5126.15, -2651.02)
+scale = Vector2(0.731032, 1)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D8" type="Sprite2D" parent="."]
+position = Vector2(-5338.84, -2702.23)
+scale = Vector2(0.0654065, 2.865)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D9" type="Sprite2D" parent="."]
+position = Vector2(-5420.84, -2827.23)
+scale = Vector2(0.0654065, 1.1775)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D4" type="Sprite2D" parent="."]
+position = Vector2(-4758.1, -2927.51)
+scale = Vector2(0.200193, 2.86607)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D10" type="Sprite2D" parent="."]
+position = Vector2(-4331.72, -3149.24)
+scale = Vector2(-0.855345, 1.86594)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D5" type="Sprite2D" parent="."]
+position = Vector2(-4929.43, -2991.29)
+scale = Vector2(0.360013, 7.07593)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D2" type="Sprite2D" parent="."]
+position = Vector2(-4314.71, -2725.74)
+rotation = 0.493431
+scale = Vector2(0.957241, 1)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D3" type="Sprite2D" parent="."]
+position = Vector2(-3836.87, -2637.49)
+rotation = -0.599863
+scale = Vector2(0.911203, 1)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Wall2" type="StaticBody2D" parent="."]
+position = Vector2(96.4615, -3206.24)
+scale = Vector2(0.44, 0.44)
+collision_layer = 4
+collision_mask = 3
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Wall2"]
+position = Vector2(-11777.8, 114.794)
+scale = Vector2(0.997059, 1)
+polygon = PackedVector2Array(93.7881, 116.421, 618.447, 116.947, 618.561, 415.245, 892.606, 414.704, 892.782, 615.859, 1159.88, 615.456, 2388.93, 1275.04, 2356.01, 1337.99, 1141.61, 689.462, 94.2588, 686.813)
+
+[node name="CollisionPolygon2D2" type="CollisionPolygon2D" parent="Wall2"]
+position = Vector2(-10404.3, 2645.93)
+rotation = -1.21139
+scale = Vector2(0.997059, 1)
+polygon = PackedVector2Array(1263.72, 485.846, 2351.38, 1245.91, 2310.83, 1305.65, 1222.52, 546.438)
+
+[node name="CollisionPolygon2D3" type="CollisionPolygon2D" parent="Wall2"]
+position = Vector2(-13808.6, 1425.09)
+rotation = -0.594441
+scale = Vector2(0.997059, 1)
+polygon = PackedVector2Array(1464.45, 523.93, 1361.11, 676.521, 2164.76, 1218.41, 2123.96, 1278.5, 1240.88, 683.1, 1385.62, 470.754)
+
+[node name="CollisionPolygon2D4" type="CollisionPolygon2D" parent="Wall2"]
+position = Vector2(-14400.3, 261.657)
+rotation = -0.594441
+scale = Vector2(0.997059, 1)
+polygon = PackedVector2Array(1281.41, 622.763, 2164.76, 1218.41, 2123.96, 1278.5, 1240.88, 683.1)
+
+[node name="CollisionPolygon2D6" type="CollisionPolygon2D" parent="Wall2"]
+position = Vector2(-12093.3, 261.337)
+rotation = -0.594441
+scale = Vector2(0.997059, 1)
+polygon = PackedVector2Array(1281.41, 622.763, 2315.5, 1319.6, 2239.34, 1431.38, 1205.36, 735.109)
+
+[node name="CollisionPolygon2D5" type="CollisionPolygon2D" parent="Wall2"]
+position = Vector2(-14443.5, 997.034)
+rotation = -0.594441
+scale = Vector2(0.997059, 1)
+polygon = PackedVector2Array(1642.94, 892.077, 1721.99, 945.344, 1673.97, 1016.05, 1595.13, 962.596)
+
 [node name="Wall" type="StaticBody2D" parent="."]
+visible = false
 position = Vector2(96.4615, -3206.24)
 scale = Vector2(0.44, 0.44)
 collision_layer = 4
@@ -49,10 +153,18 @@ polygon = PackedVector2Array(509.48, 220.535, 57, -232, 34, -209, 486.907, 243.1
 [node name="TestLight" parent="." instance=ExtResource("3_nsrm0")]
 position = Vector2(229.697, -3645.73)
 
+[node name="PushableCrate3" parent="." instance=ExtResource("3_x42e6")]
+position = Vector2(-4746.71, -3047.78)
+scale = Vector2(1.59998, 1.59998)
+
+[node name="PushableCrate4" parent="." instance=ExtResource("3_x42e6")]
+position = Vector2(-4282.07, -2978.81)
+
 [node name="PushableCrate" parent="." instance=ExtResource("3_x42e6")]
-position = Vector2(129.825, -3360.56)
-scale = Vector2(4.92, 4.94758)
+position = Vector2(-5536.56, -3249.83)
 
 [node name="PushableCrate2" parent="." instance=ExtResource("3_x42e6")]
-position = Vector2(315.034, -3302.59)
-scale = Vector2(4.25983, 4.26758)
+position = Vector2(-5311.08, -3269.15)
+
+[node name="Rope" parent="." instance=ExtResource("5_6761a")]
+position = Vector2(-4394.41, -3102.46)

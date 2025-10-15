@@ -19,3 +19,5 @@ func _ready() -> void:
     can_sleep = allow_sleep
     if not allow_sleep:
         sleeping = false
+    if not is_in_group("paint_decal_parent"):
+        add_to_group("paint_decal_parent")

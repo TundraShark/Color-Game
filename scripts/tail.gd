@@ -214,7 +214,11 @@ func _melee_swoosh() -> void:
                     node2d.rotation = placement_normal.angle() + deg_to_rad(90.0)
                 if decal.has_method("configure"):
                     decal.configure(_rng, placement_normal, _current_color, _current_color_name, Vector2.ZERO)
-                parent_node.add_child(decal)
+                var decal_parent := _find_decal_parent_for_hit(hit_dict)
+                if decal_parent:
+                    decal_parent.add_child(decal)
+                else:
+                    parent_node.add_child(decal)
 
     _shared_cooldown = melee_cooldown
     _start_melee_animation()
@@ -299,6 +303,19 @@ func _clear_vines(point: Vector2, radius: float = 80.0) -> void:
     for target in nodes_to_free:
         if target != null and target.is_inside_tree():
             target.queue_free()
+
+func _find_decal_parent_for_hit(hit_data: Dictionary) -> Node:
+    if hit_data.has("collider"):
+        var collider_obj: Object = hit_data.get("collider")
+        if collider_obj is Node:
+            var node := collider_obj as Node
+            if node.is_inside_tree():
+                var current := node
+                while current:
+                    if current.is_in_group("paint_decal_parent"):
+                        return current
+                    current = current.get_parent()
+    return null
 
 func _set_current_color_key(key: int) -> void:
     if not COLOR_MAP.has(key):
