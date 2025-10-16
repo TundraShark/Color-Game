@@ -52,6 +52,11 @@ position = Vector2(-5386.57, -3163)
 scale = Vector2(0.731032, 1)
 texture = SubResource("GradientTexture2D_x42e6")
 
+[node name="Sprite2D13" type="Sprite2D" parent="."]
+position = Vector2(-4780, -3007.44)
+scale = Vector2(0.116514, 2.2623)
+texture = SubResource("GradientTexture2D_x42e6")
+
 [node name="Sprite2D7" type="Sprite2D" parent="."]
 position = Vector2(-5126.15, -2651.02)
 scale = Vector2(0.731032, 1)
@@ -113,7 +118,7 @@ collision_mask = 3
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Wall2"]
 position = Vector2(-11777.8, 114.794)
 scale = Vector2(0.997059, 1)
-polygon = PackedVector2Array(93.7881, 116.421, 618.447, 116.947, 618.561, 415.245, 892.606, 414.704, 892.782, 615.859, 1159.88, 615.456, 2388.93, 1275.04, 2356.01, 1337.99, 1141.61, 689.462, 94.2588, 686.813)
+polygon = PackedVector2Array(93.7881, 116.421, 618.447, 116.947, 618.186, 256.97, 781.302, 255.308, 780.565, 414.753, 892.606, 414.704, 892.782, 615.859, 1159.88, 615.456, 2388.93, 1275.04, 2356.01, 1337.99, 1141.61, 689.462, 94.2588, 686.813)
 
 [node name="CollisionPolygon2D2" type="CollisionPolygon2D" parent="Wall2"]
 position = Vector2(-10404.3, 2645.93)
@@ -183,12 +188,8 @@ polygon = PackedVector2Array(509.48, 220.535, 57, -232, 34, -209, 486.907, 243.1
 [node name="TestLight" parent="." instance=ExtResource("3_nsrm0")]
 position = Vector2(229.697, -3645.73)
 
-[node name="PushableCrate3" parent="." instance=ExtResource("3_x42e6")]
-position = Vector2(-4746.71, -3047.78)
-scale = Vector2(1.59998, 1.59998)
-
 [node name="PushableCrate4" parent="." instance=ExtResource("3_x42e6")]
-position = Vector2(-4782.82, -3096.6)
+position = Vector2(-4587.82, -2928.69)
 
 [node name="PushableCrate" parent="." instance=ExtResource("3_x42e6")]
 position = Vector2(-5536.56, -3249.83)
