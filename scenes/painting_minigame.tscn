@@ -1,0 +1,98 @@
+[gd_scene load_steps=2 format=3 uid="uid://b4d5frxce1uj0"]
+
+[ext_resource type="Script" uid="uid://mc66l4f2xdbh" path="res://scripts/ui/painting_canvas.gd" id="1_canvas_script"]
+
+[node name="PaintingMinigame" type="CanvasLayer"]
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0784314, 0.0784314, 0.0784314, 1)
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Canvas" type="Node2D" parent="UI"]
+position = Vector2(0.0387211, 0.016243)
+script = ExtResource("1_canvas_script")
+canvas_size = Vector2(780, 780)
+
+[node name="CanvasBorder" type="ColorRect" parent="UI"]
+layout_mode = 0
+offset_right = 745.0
+offset_bottom = 720.0
+color = Color(1, 1, 1, 0.12549)
+
+[node name="ColorPicker" type="ColorPicker" parent="UI"]
+layout_mode = 0
+offset_left = 871.136
+offset_top = 23.9777
+offset_right = 1169.14
+offset_bottom = 487.978
+color = Color(0, 0, 0, 1)
+sampler_visible = false
+color_modes_visible = false
+presets_visible = false
+
+[node name="BrushSlider" type="HSlider" parent="UI"]
+layout_mode = 0
+offset_left = 875.401
+offset_top = 522.12
+offset_right = 1131.4
+offset_bottom = 554.12
+min_value = 4.0
+max_value = 128.0
+value = 24.0
+
+[node name="BrushLabel" type="Label" parent="UI"]
+layout_mode = 0
+offset_left = 872.008
+offset_top = 497.272
+offset_right = 1048.01
+offset_bottom = 521.272
+text = "Brush Size"
+
+[node name="ClearButton" type="Button" parent="UI"]
+layout_mode = 0
+offset_left = 871.008
+offset_top = 567.438
+offset_right = 1127.01
+offset_bottom = 607.438
+text = "Clear"
+
+[node name="SubmitButton" type="Button" parent="UI"]
+layout_mode = 0
+offset_left = 871.835
+offset_top = 622.876
+offset_right = 1127.83
+offset_bottom = 662.876
+text = "Submit"
+
+[node name="Uploader" type="HTTPRequest" parent="."]
+
+[node name="CanvasBorder#CanvasViewport" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 32.0
+offset_right = -348.0
+offset_bottom = -117.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[connection signal="color_changed" from="UI/ColorPicker" to="UI/Canvas" method="set_color"]
+[connection signal="value_changed" from="UI/BrushSlider" to="UI/Canvas" method="set_brush_size"]
+[connection signal="pressed" from="UI/ClearButton" to="UI/Canvas" method="clear_canvas"]
+[connection signal="pressed" from="UI/SubmitButton" to="UI/Canvas" method="submit_canvas"]
