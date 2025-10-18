@@ -104,9 +104,52 @@ scale = Vector2(0.957241, 1)
 texture = SubResource("GradientTexture2D_x42e6")
 
 [node name="Sprite2D3" type="Sprite2D" parent="."]
-position = Vector2(-3836.87, -2637.49)
+position = Vector2(-3782.52, -2608.22)
 rotation = -0.599863
 scale = Vector2(0.911203, 1)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D14" type="Sprite2D" parent="."]
+position = Vector2(-4157.35, -2327.74)
+rotation = 0.0905693
+scale = Vector2(0.911203, 1)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D18" type="Sprite2D" parent="."]
+position = Vector2(-4557.94, -2217.24)
+scale = Vector2(0.10511, 4.06544)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D19" type="Sprite2D" parent="."]
+position = Vector2(-4471.2, -2191.97)
+scale = Vector2(0.173411, 2.44328)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D20" type="Sprite2D" parent="."]
+position = Vector2(-4702.6, -2203.95)
+scale = Vector2(0.385188, 3.29555)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D21" type="Sprite2D" parent="."]
+position = Vector2(-4916.24, -2184.95)
+scale = Vector2(0.311583, 2.00422)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D15" type="Sprite2D" parent="."]
+position = Vector2(-4872, -2141.02)
+scale = Vector2(7.34464, 1)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D16" type="Sprite2D" parent="."]
+position = Vector2(-2505.83, -3261.56)
+rotation = 1.5708
+scale = Vector2(3.55168, 1)
+texture = SubResource("GradientTexture2D_x42e6")
+
+[node name="Sprite2D17" type="Sprite2D" parent="."]
+position = Vector2(-7236.82, -3261.56)
+rotation = 1.5708
+scale = Vector2(3.55168, 1)
 texture = SubResource("GradientTexture2D_x42e6")
 
 [node name="Wall2" type="StaticBody2D" parent="."]
@@ -121,10 +164,22 @@ scale = Vector2(0.997059, 1)
 polygon = PackedVector2Array(93.7881, 116.421, 618.447, 116.947, 618.186, 256.97, 781.302, 255.308, 780.565, 414.753, 892.606, 414.704, 892.782, 615.859, 1159.88, 615.456, 2388.93, 1275.04, 2356.01, 1337.99, 1141.61, 689.462, 94.2588, 686.813)
 
 [node name="CollisionPolygon2D2" type="CollisionPolygon2D" parent="Wall2"]
-position = Vector2(-10404.3, 2645.93)
+position = Vector2(-10282.5, 2712.18)
 rotation = -1.21139
 scale = Vector2(0.997059, 1)
-polygon = PackedVector2Array(1263.72, 485.846, 2351.38, 1245.91, 2310.83, 1305.65, 1222.52, 546.438)
+polygon = PackedVector2Array(1263.97, 486.818, 2352.29, 1247.92, 2310.55, 1306.84, 1222.52, 546.438)
+
+[node name="CollisionPolygon2D11" type="CollisionPolygon2D" parent="Wall2"]
+position = Vector2(-11212.8, 2919.35)
+rotation = -1.21139
+scale = Vector2(0.997059, 1)
+polygon = PackedVector2Array(1269.83, 473.519, 1623.04, 1750.95, 1552.78, 1770.26, 1200.22, 492.632)
+
+[node name="CollisionPolygon2D10" type="CollisionPolygon2D" parent="Wall2"]
+position = Vector2(-7371.08, -669.809)
+rotation = -1.21139
+scale = Vector2(0.997059, 1)
+polygon = PackedVector2Array(-2365.88, 2403.61, 2415.33, 612.6, 2440.97, 680.575, -2409.11, 2497.46, -6227.59, -7635.59, -1377.55, -9452.46, -1352.48, -9384.69, -6134.08, -7593.32, -4366.35, -2901.97, -4238.31, -2950.08, -4085.96, -2546.19, -4001.17, -2577.54, -3813.52, -2079.19, -3758.65, -2099.59, -3705.03, -1956.9, -3814.09, -1915.56, -3727.24, -1684.52, -3885.28, -1625.38)
 
 [node name="CollisionPolygon2D3" type="CollisionPolygon2D" parent="Wall2"]
 position = Vector2(-13808.6, 1425.09)
@@ -207,7 +262,7 @@ segment_count = 3
 
 [node name="MultiSegmentRope3" parent="." instance=ExtResource("10_multi_rope")]
 position = Vector2(-4287.44, -3133.16)
-segment_count = 13
+segment_count = 10
 
 [node name="MultiSegmentRope4" parent="." instance=ExtResource("10_multi_rope")]
 position = Vector2(-4244.74, -3132.16)

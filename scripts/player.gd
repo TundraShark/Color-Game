@@ -6,11 +6,12 @@ const MAX_SPEED := 240.0
 const ACCELERATION := 1200.0
 const AIR_ACCELERATION := 600.0
 const FRICTION := 1400.0
-const JUMP_SPEED := -420.0
+const JUMP_SPEED := -500.0
+const JUMP_RELEASE_DAMP := 0.5
 const SLIPPERY_FRICTION := 200.0
 const SLIPPERY_ACCEL_MULT := 4.0
 const SLIPPERY_SPEED_MULT := 2.3
-const FOOT_SAMPLE_OFFSETS := [Vector2(0, 22), Vector2(-10, 20), Vector2(10, 20)]
+const FOOT_SAMPLE_OFFSETS := [Vector2(0, 38), Vector2(-12, 36), Vector2(12, 36)]
 const ROPE_LAYER_MASK := 256
 const SLOPE_DETECTION_NORMAL_Y := 0.995
 const SLOPE_MIN_NORMAL_X := 0.08
@@ -60,8 +61,8 @@ var _foot_area: Area2D
 var _slippery_contacts := 0
 var _slippery_speed_bonus := 0.0
 var _slippery_decay_timer := 0.0
-var SLIPPERY_ACCEL_GAIN := 150.0
-var SLIPPERY_DECAY_RATE := 180.0
+var SLIPPERY_ACCEL_GAIN := 500.0
+var SLIPPERY_DECAY_RATE := 100.0
 var SLIPPERY_DECAY_DELAY := 0.4
 var _pending_bounce_strength := 0.0
 var _bouncy_cooldown := 0.0
@@ -312,10 +313,12 @@ func _physics_process(delta: float) -> void:
         current_velocity.y = JUMP_SPEED
         if _is_crouching:
             _exit_crouch()
-            _is_crouching = false
+        _is_crouching = false
         _play_jump_squash()
         floor_snap_length = 0.0
         _floor_snap_timer = floor_snap_reenable_delay
+    elif Input.is_action_just_released("jump") and current_velocity.y < 0.0:
+        current_velocity.y *= JUMP_RELEASE_DAMP
     else:
         current_velocity.y += gravity * delta
 
@@ -446,8 +449,15 @@ func _update_animation_state(move_input: float, current_velocity_x: float) -> vo
         if _body_anim.animation != "idle":
             _body_anim.play("idle")
         return
-    var moving: bool = absf(move_input) > 0.01 or absf(current_velocity_x) > 10.0
-    var target := "run" if moving else "idle"
+    var target := "idle"
+    if not is_on_floor():
+        if velocity.y > 10.0:
+            target = "fall"
+        else:
+            target = "jump"
+    else:
+        var moving: bool = absf(move_input) > 0.01 or absf(current_velocity_x) > 10.0
+        target = "run" if moving else "idle"
     if _body_anim.animation != target:
         _body_anim.play(target)
 
